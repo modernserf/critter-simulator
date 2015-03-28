@@ -1,8 +1,8 @@
 (defproject critter-cljs "0.1.0-SNAPSHOT"
   :description "guinea pig village simulation"
-  :url "http://justinfalcone.com/FIXME"
-  :license {:name "Eclipse Public License"
-            :url "http://www.eclipse.org/legal/epl-v10.html"}
+  :url "http://justinfalcone.com/critter-simulator"
+  :license {:name "MIT"
+            :url "http://opensource.org/licenses/MIT"}
 
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [org.clojure/clojurescript "0.0-2850"]
