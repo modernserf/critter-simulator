@@ -13,14 +13,36 @@
     :width 500
     :height 500 }))
 
-(defn translate [x y] (str "translate(" x "," y ")"))
+; +/- x
+(defn rand-center [x] (- (rand (* 2 x)) x))
+
+(defn to-random-nearby [it] 
+    (let [{:keys [x y]} it]
+        (assoc it :x (+ (rand-center 5) x) :y (+ (rand-center 5) y))))
+
+
+(defn move-critters! [] 
+    (let [{:keys [width height critters]} @app-state
+        next-critters (map to-random-nearby critters)]
+        (swap! app-state assoc :critters next-critters)))
+
+(defn app-loop! [] 
+    (js/setTimeout (fn [] 
+        (move-critters!)
+        (app-loop!)) 
+    100))
+
+
+(defn translate [x y] (str "translate(" x "px," y "px)"))
 (defn wrap-map [f xs] 
     (map-indexed (fn [idx it] [:g {:key idx} [f it]]) xs))
 
 
 (defn module-critter [critter] 
     (let [{:keys [x y]} critter]
-        [:g.module-critter {:transform (translate x y)}
+        [:g.module-critter 
+            {:style {:transition "transform 100ms"
+                     :transform (translate x y)}}
             [:circle {:r 20 :style {:fill "brown"}}]]))
 
 (defn module-critter-pen []
@@ -37,5 +59,7 @@
 
 (reagent/render-component [module-app-root]
                           (. js/document (getElementById "app")))
+
+(app-loop!)
 
 
