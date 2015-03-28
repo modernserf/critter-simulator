@@ -6,24 +6,57 @@
 
 ;; define your app data so that it doesn't get over-written on reload
 
+(defn init-critters []
+    (let [names ["Slipper" "Allegra" "Squeaky" "Sarah Jane" "Totoro"]]
+        (map #(hash-map :name % :x (rand-int 500) :y (rand-int 500)) names)))
+
 (defonce app-state (atom {
-    :critters [
-        {:name "Slipper" :x 50 :y 50 :id 1}
-        {:name "Allegra" :x 100 :y 150 :id 2}]
+    :critters (init-critters)
     :width 500
     :height 500 }))
 
 ; +/- x
 (defn rand-center [x] (- (rand (* 2 x)) x))
+(defn mean [xs] (/ (apply + xs) (count xs)))
 
 (defn to-random-nearby [it] 
-    (let [{:keys [x y]} it]
-        (assoc it :x (+ (rand-center 5) x) :y (+ (rand-center 5) y))))
+    (let [{:keys [x y]} it]        
+        (assoc it :x (+ (rand-center 5) x) 
+                  :y (+ (rand-center 5) y))))
 
+(defn center-of-points [ps] 
+    {:x (mean (map :x ps))
+     :y (mean (map :y ps))})
+
+(defn to-point-fn [f] (fn [a b] 
+    (assoc a :x (f (:x a) (:x b))
+             :y (f (:y a) (:y b)))))
+
+(defn polar->cartesian [{:keys [r angle]}]
+    {:x (* r (Math/cos angle))
+     :y (* r (Math/sin angle))})
+
+(defn cartesian->polar [{:keys [x y]}]
+    {:r     (Math/sqrt (+ (* x x) (* y y)))
+     :angle (Math/atan2 y x)})
+
+(def add-point (to-point-fn +))
+(def subtract-point (to-point-fn -))
+
+(defn abs-point [a] 
+    assoc a :x (Math/abs (:x a))
+            :y (Math/abs (:y a)))
+
+(defn move-towards [r start end]
+    (let [angle (:angle (cartesian->polar (subtract-point start end)))
+          diff (polar->cartesian {:angle angle :r r})]
+        (subtract-point start diff)))
 
 (defn move-critters! [] 
     (let [{:keys [width height critters]} @app-state
-        next-critters (map to-random-nearby critters)]
+          critter-target (center-of-points critters)
+          move-towards-target #(move-towards 10 % critter-target)
+          next-critters (map move-towards-target critters)]
         (swap! app-state assoc :critters next-critters)))
 
 (defn app-loop! [] 
