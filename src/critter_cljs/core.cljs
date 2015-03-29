@@ -68,18 +68,16 @@
             diff        (polar->cartesian velocity)]
         (subtract-point with-v diff)))
 
-(defn critter-collision? [c1 c2]
+(defn near-points? [c1 c2 radius]
     (let [  diff            (abs-point (subtract-point c1 c2))
-            space           {:x 40 :y 40}
+            space           {:x radius :y radius}
             {:keys [x y]}   (gt-point space diff)]
         (and (not= c1 c2) (and x y))))
 
 (defn exclude [x xs] (filter #(not= % x) xs))
 
 (defn rule-to-center [c cs]
-    (let [  other-critters  (exclude c cs)
-            other-center    (center-of-points other-critters)]
-        (move-towards 5 c other-center)))
+   (move-towards 5 c (center-of-points cs)))
 
 (defn rule-avoid-walls [c width height]
     (let [  {:keys [x y]}   c]
@@ -90,7 +88,7 @@
                 :else c)))
 
 (defn rule-avoid-collisions [c cs]
-    (let [  collisions      (filter #(critter-collision? % c) cs)
+    (let [  collisions      (filter #(near-points? c % 20) cs)
             collision-area  (center-of-points collisions)
             no-collision?   (empty? collisions)]
         (cond   
@@ -98,21 +96,25 @@
             :else   (move-towards -10 c collision-area))))
 
 (defn rule-match-velocity [c cs]
-    (let [  other-critters  (exclude c cs)
-            avg-velocity    (average-velocity other-critters)
+    (let [  avg-velocity    (average-velocity cs)
             r               (:r avg-velocity)
-            velocity        (assoc avg-velocity :r (/ r 4))
+            velocity        (assoc avg-velocity :r (/ r 2))
             with-v          (assoc c :velocity velocity)
             diff            (polar->cartesian velocity)]
         (subtract-point with-v diff)))
 
+(defn rule-avoid-mouse [c mouse]
+    (let [ near-mouse?  (near-points? c mouse 100)]
+        (cond near-mouse? (move-towards -50 c mouse) :else c)))
+
 (defn critter-destination [c state]
-    (let [  cs  (:critters state)]
+    (let [  other-critters  (exclude c (:critters state))]
         (-> c
-            (rule-to-center cs)
+            (rule-to-center other-critters)
             (rule-avoid-walls (:width state) (:height state))
-            (rule-avoid-collisions cs)
-            (rule-match-velocity cs)
+            (rule-avoid-collisions other-critters)
+            (rule-match-velocity other-critters)
+            (rule-avoid-mouse (:mouse state))
             )))
 
 
@@ -131,24 +133,32 @@
 
 
 (defn translate [x y] (str "translate(" x "px," y "px)"))
-(defn wrap-map [f xs] 
-    (map-indexed (fn [idx it] [:g {:key idx} [f it]]) xs))
+(defn wrap-map [f xs & args] 
+    (map-indexed (fn [idx it] [:g {:key idx} [apply f it args]]) xs))
+
+(defn on-mouse-move [e]
+    (let [  x   (.-clientX e)
+            y   (.-clientY e)]
+        ; (println x y)
+        (swap! app-state assoc :mouse { :x x :y y})))
 
 
-(defn module-critter [critter] 
+(defn module-critter [critter width height] 
     (let [{:keys [x y]} critter]
         [:g.module-critter 
             {:style {:transition "transform 500ms"
                      :transform (translate x y)}}
-            [:circle {:r 20 :style {:fill "brown"}}]]))
+            [:circle {:r 5 :style {:fill "brown"}}]]))
 
 (defn module-critter-pen []
     (let [{:keys [width height critters]} @app-state]
         [:svg.module-critter-pen 
-            {:width width :height height}
+            {:width width 
+             :height height
+             :on-mouse-move on-mouse-move}
             [:rect {:width width :height height 
                 :style {:fill "gray"}}]
-            [:g.critters (wrap-map module-critter critters)]]))
+            [:g.critters (wrap-map module-critter critters width height)]]))
 
 (defn module-app-root []
     [:section.module-app-root
