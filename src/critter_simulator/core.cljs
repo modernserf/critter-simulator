@@ -1,9 +1,9 @@
-(ns ^:figwheel-always critter-cljs.core
+(ns ^:figwheel-always critter-simulator.core
     (:require
-              [reagent.core           :as reagent   :refer [atom]]
-              [critter-cljs.behavior  :as behavior]
-              [critter-cljs.point     :as point]
-              [critter-cljs.critter   :as critter]))
+              [reagent.core                 :as reagent   :refer [atom]]
+              [critter-simulator.behavior   :as behavior]
+              [critter-simulator.point      :as point]
+              [critter-simulator.critter    :as critter]))
 
 (enable-console-print!)
 
@@ -19,11 +19,11 @@
 
 (def base-critters
   [["Slipper"     :hungry   {:color [:black :white :orange]}]
-   ["Allegra"     :cowardly {:color [:black :orange :white]}]
-   ["Totoro"      :friendly :hungry  {:color [:white :black :black]}]
-   ["Squeaky"     :cowardly :orange]
-   ["Sarah Jane"  :hungry   :cowardly :black]
-   ["Gizmo"       :hungry   :orange]
+   ; ["Allegra"     :cowardly {:color [:black :orange :white]}]
+   ; ["Totoro"      :friendly :hungry  {:color [:white :black :black]}]
+   ; ["Squeaky"     :cowardly :orange]
+   ; ["Sarah Jane"  :hungry   :cowardly :black]
+   ; ["Gizmo"       :hungry   :orange]
    ["Twitch"      :cowardly :black]])
 
 (defonce app-state
@@ -49,7 +49,7 @@
   (js/setTimeout (fn []
                    (move-critters! @app-state)
                    (app-loop!))
-                 100))
+                 1000))
 
 (defn translate [x y] (str "translate(" x "px," y "px)"))
 (defn wrap-map [f xs & args]
@@ -60,20 +60,33 @@
             y   (.-clientY e)]
         (swap! app-state assoc :mouse { :x x :y y})))
 
-(defn critter-bearing [c]
-  (point/bearing (:position c) (:destination c) ))
+(def pi Math/PI)
+
+(def d-left     0)
+(def d-down     (/ pi 2))
+(def d-right    (- pi))
+(def d-up       (- d-down))
+
+(defn bearing->rotate [bearing]
+  (str "rotate(" (+ Math/PI) "rad)"))
 
 (defn module-critter [c]
   (let [[x y] (:position c)
         [head torso butt] (-> c :props :color)
-        b  (critter-bearing c)]
-    [:g.module-critter {:style {:transition "transform 100ms"
-                                :transform (translate x y)}}
-      [:g.critter-inner {:style {:transition "transform 100ms"
-                                 :transform (str "rotate(" b "rad)")}}
-        [:circle {:r 5 :cy 5  :style {:fill butt}}]
-        [:circle {:r 5 :cy -5 :style {:fill head}}]
-        [:rect {:x -5 :y -5 :width 10 :height 10 :style {:fill torso}}]]]))
+        b  (/ (critter/bearing c) Math/PI)]
+    [:g
+      [:g.module-critter {:style {:transition "transform 100ms"
+                                 :transform (translate x y)}}
+       [:g.critter-inner {:style {:transition "transform 100ms"
+                                  :transform "rotate(90deg)"}}
+         [:circle {:r 5 :cx 5  :style {:fill butt}}]
+         [:circle {:r 6 :cx -5 :style {:fill head}}]
+         [:rect {:x -5 :y -5 :width 10 :height 10 :style {:fill torso}}]]]
+      [:circle {:r 5 :fill torso
+                :cx (-> c :destination first)
+                :cy (-> c :destination second)}]
+     ]
+    ))
 
 (defn module-critter-pen [env]
   (let [{:keys [width height critters]} env]

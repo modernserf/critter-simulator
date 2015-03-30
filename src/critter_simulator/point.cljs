@@ -1,4 +1,4 @@
-(ns ^:figwheel-always critter-cljs.point)
+(ns ^:figwheel-always critter-simulator.point)
 
 (defn offset [[x1 y1] [x2 y2]] [(- x1 x2) (- y1 y2)])
 (defn add [[x1 y1] [x2 y2]] [(+ x1 x2) (+ y1 y2)])
@@ -17,7 +17,7 @@
   [(rand-int width) (rand-int height)])
 
 (defn distance [a b] (distance' (offset a b)))
-(defn bearing [a b] (bearing' (offset a b)))
+(defn bearing [from to] (bearing' (offset from to)))
 
 (defn near? [a b dist] (> dist (distance a b)))
 

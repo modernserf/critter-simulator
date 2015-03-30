@@ -1,5 +1,5 @@
-(ns ^:figwheel-always critter-cljs.critter
-    (:require [critter-cljs.point :as point]))
+(ns ^:figwheel-always critter-simulator.critter
+    (:require [critter-simulator.point :as point]))
 
 (def init-critter-state {:hungry 0 :lonely 0 :afraid 0 :bowel 0 })
 
@@ -47,6 +47,9 @@
     (assoc c  :position pos')))
 
 (defn eq? [a b] (= (:name a) (:name b)))
+
+(defn bearing [c]
+  (point/bearing (:position c) (:destination c) ))
 
 (defn set-destination [c v dest]
   (cond (>= v 0)  (assoc c  :velocity v :destination dest)

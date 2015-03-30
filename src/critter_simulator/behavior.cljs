@@ -1,7 +1,7 @@
-(ns ^:figwheel-always critter-cljs.behavior
+(ns ^:figwheel-always critter-simulator.behavior
     (:require
-              [critter-cljs.point   :as point]
-              [critter-cljs.critter :as critter]))
+              [critter-simulator.point   :as point]
+              [critter-simulator.critter :as critter]))
 
 ; increment/decrement state counter k
 ; TODO: increment based on time elapsed vs 1-per-round
