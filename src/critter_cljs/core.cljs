@@ -228,23 +228,23 @@
                                 :transform (translate x y)}}
       [:g.critter-inner {:style {:transition "transform 100ms"
                                  :transform (str "rotate(" b "rad)")}}
-        [:circle {:r 5 :cx 5  :style {:fill butt}}] 
-        [:circle {:r 5 :cx -5 :style {:fill head}}]
+        [:circle {:r 5 :cy 5  :style {:fill butt}}] 
+        [:circle {:r 5 :cy -5 :style {:fill head}}]
         [:rect {:x -5 :y -5 :width 10 :height 10 :style {:fill torso}}]]]))
 
-(defn module-critter-pen []
-    (let [{:keys [width height critters]} @app-state]
-        [:svg.module-critter-pen 
-            {:width width 
-             :height height
-             :on-mouse-move on-mouse-move}
-            [:rect {:width width :height height 
-                :style {:fill "gray"}}]
-            [:g.critters (wrap-map module-critter critters)]]))
+(defn module-critter-pen [env]
+  (let [{:keys [width height critters]} env]
+    [:svg.module-critter-pen {:width width 
+                              :height height
+                              :on-mouse-move on-mouse-move}
+      [:rect {:width width 
+              :height height 
+              :style {:fill "gray"}}]
+      [:g.critters (wrap-map module-critter critters)]]))
 
 (defn module-app-root []
-    [:section.module-app-root
-        [module-critter-pen]])
+  [:section.module-app-root
+    [module-critter-pen @app-state]])
 
 (reagent/render-component [module-app-root]
                           (. js/document (getElementById "app")))
