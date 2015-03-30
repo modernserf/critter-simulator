@@ -18,7 +18,7 @@
 (defn dec-0 [x] (max 0 (dec x)))
 (defn dec-state [c k] (update-in c [:state k] dec-0))
 
-(defn at-threshold? [c prop] 
+(defn at-threshold? [c prop]
   (let [threshold (- 10 (-> c :props prop))
         value     (-> c :state prop)]
     (>= value threshold)))
@@ -65,7 +65,7 @@
 
 (defn find-closest-critter [c cs]
   (let [pos     (:position c)
-        sorted  (reduce #(assoc %1 (distance pos (:position %2)) %2) 
+        sorted  (reduce #(assoc %1 (distance pos (:position %2)) %2)
                         (sorted-map)
                         (filter #(not= c %) cs))]
     (-> sorted vals first)))
@@ -97,16 +97,16 @@
 
 (defn is-away-from-cursor? [c env] true)
 (defn run-away [c env] c)
-; 
+;
 
 (def behavior-lonely (behavior :lonely is-near-others?      go-to-neighbor))
 (def behavior-hungry (behavior :hungry is-eating?           go-to-food))
-(def behavior-afraid (behavior :afraid is-away-from-cursor? run-away)) 
+(def behavior-afraid (behavior :afraid is-away-from-cursor? run-away))
 
 (defn behavior-collision [c env]
   (let [collisions      (filter #(near-critters? c % 10) (:critters env))
         collision-area  (center-of-points (map :position collisions))]
-    
+
     (cond (seq collisions) (set-destination c 10 (random-point env))
           :else c)))
 
@@ -118,16 +118,14 @@
 
 ; TODO: handle behaviors that change environment e.g. (eating, pooping)
 (def critter-default-behaviors
-  [
-   behavior-lonely
-   ; behavior-hungry
-   ; behavior-afraid
+  [behavior-lonely
+   behavior-hungry
+   behavior-afraid
    behavior-collision
-   behavior-boundaries
-   ])
+   behavior-boundaries])
 
 ; critters
-(def base-critters 
+(def base-critters
   [["Slipper"     :hungry   {:color [:black :white :orange]}]
    ["Allegra"     :cowardly {:color [:black :orange :white]}]
    ["Totoro"      :friendly :hungry  {:color [:white :black :black]}]
@@ -152,9 +150,9 @@
 (defrecord Critter [name props state position destination velocity behaviors])
 
 (defn make-critter [name props env]
-  (->Critter name 
-             props 
-             init-critter-state 
+  (->Critter name
+             props
+             init-critter-state
              (random-point env)
              (random-point env)
              0
@@ -162,11 +160,11 @@
 
 (defn make-props [options]
   (reduce #(merge %1 (cond (keyword? %2) (%2 critter-props) :else %2))
-          (:default critter-props) 
+          (:default critter-props)
           options))
 
 (defn init-critters [env]
-  (map #(make-critter (first %) (make-props (rest %)) env) 
+  (map #(make-critter (first %) (make-props (rest %)) env)
        base-critters))
 
 (defn critter-do-behaviors [c env]
@@ -195,21 +193,21 @@
 (defn critter-report [c]
   (str (:name c) " " (:state c)  "\n"))
 
-(defn move-critters! [env] 
-  (let [next-critters (map #(critter-next-position (critter-do-behaviors % env)) 
+(defn move-critters! [env]
+  (let [next-critters (map #(critter-next-position (critter-do-behaviors % env))
                            (:critters env))]
     ; (println (map critter-report next-critters))
     (swap! app-state assoc :critters next-critters)))
 
-(defn app-loop! [] 
-  (js/setTimeout (fn [] 
+(defn app-loop! []
+  (js/setTimeout (fn []
                    (move-critters! @app-state)
-                   (app-loop!)) 
+                   (app-loop!))
                  100))
 
 
 (defn translate [x y] (str "translate(" x "px," y "px)"))
-(defn wrap-map [f xs & args] 
+(defn wrap-map [f xs & args]
     (map-indexed (fn [idx it] [:g {:key idx} [apply f it args]]) xs))
 
 (defn on-mouse-move [e]
@@ -220,7 +218,7 @@
 (defn critter-bearing [c]
   (bearing (:position c) (:destination c) ))
 
-(defn module-critter [critter] 
+(defn module-critter [critter]
   (let [[x y] (:position critter)
         [head torso butt] (-> critter :props :color)
         b  (critter-bearing critter)]
@@ -228,17 +226,17 @@
                                 :transform (translate x y)}}
       [:g.critter-inner {:style {:transition "transform 100ms"
                                  :transform (str "rotate(" b "rad)")}}
-        [:circle {:r 5 :cy 5  :style {:fill butt}}] 
+        [:circle {:r 5 :cy 5  :style {:fill butt}}]
         [:circle {:r 5 :cy -5 :style {:fill head}}]
         [:rect {:x -5 :y -5 :width 10 :height 10 :style {:fill torso}}]]]))
 
 (defn module-critter-pen [env]
   (let [{:keys [width height critters]} env]
-    [:svg.module-critter-pen {:width width 
+    [:svg.module-critter-pen {:width width
                               :height height
                               :on-mouse-move on-mouse-move}
-      [:rect {:width width 
-              :height height 
+      [:rect {:width width
+              :height height
               :style {:fill "gray"}}]
       [:g.critters (wrap-map module-critter critters)]]))
 

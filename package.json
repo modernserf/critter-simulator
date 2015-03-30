@@ -1,0 +1,29 @@
+{
+  "name": "critter-simulator",
+  "version": "0.0.0",
+  "description": "wheek wheek wheek",
+  "main": "\"\"",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "deploy": "gh-pages-deploy",
+    "lein-build" : "lein cljsbuild once min"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/modernserf/critter-simulator.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/modernserf/critter-simulator/issues"
+  },
+  "homepage": "https://github.com/modernserf/critter-simulator",
+  "devDependencies": {
+    "gh-pages-deploy": "^0.3.0"
+  },
+  "gh-pages-deploy" : {
+    "staticpath": "resources/public",
+    "cname": "justinfalcone.com",
+    "prep" : "lein-build"
+  }
+}
