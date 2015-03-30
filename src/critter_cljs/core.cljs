@@ -6,130 +6,206 @@
 
 ;; define your app data so that it doesn't get over-written on reload
 
-(defn init-critters []
-    (let [names ["Slipper" "Allegra" "Squeaky" "Sarah Jane" "Totoro"
-        ]]
-        (map #(hash-map 
-            :name % 
-            :x (rand-int 500) 
-            :y (rand-int 500)
-            :velocity {:r 0 :angle 0}) 
-        names)))
+; point: [x y]
+(defn random-point [env]
+  [(rand-int (:width env)) (rand-int (:height env))])
 
-(defonce app-state (atom {
-    :critters (init-critters)
-    :width 500
-    :height 500 }))
 
-; +/- x
-(defn rand-center [x] (- (rand (* 2 x)) x))
-(defn mean [xs] (/ (apply + xs) (count xs)))
+; increment/decrement state counter k
+; TODO: increment based on time elapsed vs 1-per-round
+(defn inc-state [c k] (update-in c [:state k] inc))
+; decrement until 0
+(defn dec-0 [x] (max 0 (dec x)))
+(defn dec-state [c k] (update-in c [:state k] dec-0))
 
-(defn to-random-nearby [it] 
-    (let [{:keys [x y]} it]        
-        (assoc it :x (+ (rand-center 10) x) 
-                  :y (+ (rand-center 10) y))))
+(defn at-threshold? [c prop] 
+  (let [threshold (- 10 (-> c :props prop))
+        value     (-> c :state prop)]
+    (>= value threshold)))
 
-(defn mean-hash [xs xs-keys]    
-    (reduce 
-        (fn [coll k] (assoc coll k (mean (map k xs)))) 
-        {} xs-keys))
+(defn behavior [k pred-recover? fn-threshold]
+  (fn [c env]
+    (cond (pred-recover? c env) (dec-state    c k)
+          (at-threshold? c k)   (fn-threshold c env)
+          :else                 (inc-state    c k))))
 
-(defn center-of-points [ps]
-    (mean-hash ps [:x :y]))
+(defn offset [[x1 y1] [x2 y2]] [(- x1 x2) (- y1 y2)])
+(defn add-point [[x1 y1] [x2 y2]] [(+ x1 x2) (+ y1 y2)])
+(defn distance' [[x y]] (Math/sqrt (+ (* x x) (* y y))))
+(defn bearing' [[x y]] (Math/atan2 (- y) x))
 
-(defn average-velocity [cs]
-    (mean-hash (map :velocity cs) [:r :angle]))
-
-(defn to-point-fn [f] (fn [a b] 
-    (assoc a :x (f (:x a) (:x b))
-             :y (f (:y a) (:y b)))))
+(defn cartesian->polar [c]
+  {:r     (distance' c)
+   :angle (bearing' c)})
 
 (defn polar->cartesian [{:keys [r angle]}]
-    {:x (* r (Math/cos angle))
-     :y (* r (Math/sin angle))})
+    [(* r (Math/cos angle))
+     (- (* r (Math/sin angle)))])
 
-(defn cartesian->polar [{:keys [x y]}]
-    {:r     (Math/sqrt (+ (* x x) (* y y)))
-     :angle (Math/atan2 y x)})
+(defn distance [a b] (distance' (offset a b)))
+(defn bearing [a b] (bearing' (offset a b)))
 
-(def add-point (to-point-fn +))
-(def subtract-point (to-point-fn -))
-(def gt-point (to-point-fn >))
+(defn set-destination [c v dest]
+  (let [pos   (:position c)
+        dist  (distance pos dest)]
+    (cond (>= v 0)  (assoc c  :velocity v
+                              :destination dest)
+          :else     (assoc c  :velocity (- v)
+                              :destination ))))
 
-(defn abs-point [a] 
-    (assoc a :x (Math/abs (:x a))
-             :y (Math/abs (:y a))))
+(defn set-destination [c v dest]
+  (cond (>= v 0)  (assoc c  :velocity v :destination dest)
+        :else     (let [pos   (:position c)
+                        p     (cartesian->polar (offset pos dest))
+                        p'    (update-in p [:angle] #(+ Math/PI))
+                        o'    (polar->cartesian p')
+                        dest' (add-point pos o')]
+                    (assoc c :velocity    (- v)
+                             :destination dest'))))
 
-(defn move-towards [r start end]
-    (let [  route       (cartesian->polar (subtract-point start end))
-            velocity    (assoc route :r (min (:r route) r))
-            with-v      (assoc start :velocity velocity)
-            diff        (polar->cartesian velocity)]
-        (subtract-point with-v diff)))
+(defn find-closest-critter [c cs]
+  (let [pos     (:position c)
+        sorted  (reduce #(assoc %1 (distance pos (:position %2)) %2) 
+                        (sorted-map)
+                        (filter #(not= c %) cs))]
+    (-> sorted vals first)))
 
-(defn near-points? [c1 c2 radius]
-    (let [  diff            (abs-point (subtract-point c1 c2))
-            space           {:x radius :y radius}
-            {:keys [x y]}   (gt-point space diff)]
-        (and (not= c1 c2) (and x y))))
+(defn go-to-neighbor [c env]
+  (let [closest (find-closest-critter c (:critters env))]
+    (set-destination c 10 (:position closest))))
 
-(defn exclude [x xs] (filter #(not= % x) xs))
+(defn near-points [a b dist] (> dist (distance a b)))
 
-(defn rule-to-center [c cs]
-   (move-towards 5 c (center-of-points cs)))
+(defn critter-eq [a b]
+  (= (:name a) (:name b)))
 
-(defn rule-avoid-walls [c width height]
-    (let [  {:keys [x y]}   c]
-        (cond   (< x 0)         (assoc c :x 0)
-                (< y 0)         (assoc c :y 0)
-                (< width x)     (assoc c :x width)
-                (< height y)    (assoc c :y height)
-                :else c)))
+(defn near-critters? [a b distance]
+  (cond (critter-eq a b) nil
+        :else (near-points (:position a) (:position b) distance)))
 
-(defn rule-avoid-collisions [c cs]
-    (let [  collisions      (filter #(near-points? c % 20) cs)
-            collision-area  (center-of-points collisions)
-            no-collision?   (empty? collisions)]
-        (cond   
-            no-collision? c
-            :else   (move-towards -10 c collision-area))))
+(defn is-near-others? [c env]
+  (some #(near-critters? c % 50) (:critters env)))
 
-(defn rule-match-velocity [c cs]
-    (let [  avg-velocity    (average-velocity cs)
-            r               (:r avg-velocity)
-            velocity        (assoc avg-velocity :r (/ r 2))
-            with-v          (assoc c :velocity velocity)
-            diff            (polar->cartesian velocity)]
-        (subtract-point with-v diff)))
+(defn mean [xs] (/ (apply + xs) (count xs)))
 
-(defn rule-avoid-mouse [c mouse]
-    (let [ near-mouse?  (near-points? c mouse 100)]
-        (cond near-mouse? (move-towards -50 c mouse) :else c)))
+(defn center-of-points [ps]
+  [(mean (map first ps)) (mean (map second ps))])
 
-(defn critter-destination [c state]
-    (let [  other-critters  (exclude c (:critters state))]
-        (-> c
-            (rule-to-center other-critters)
-            (rule-avoid-walls (:width state) (:height state))
-            (rule-avoid-collisions other-critters)
-            (rule-match-velocity other-critters)
-            (rule-avoid-mouse (:mouse state))
-            )))
+; TODO
+(defn is-eating? [c env] true)
+(defn go-to-food [c env] c)
 
+(defn is-away-from-cursor? [c env] true)
+(defn run-away [c env] c)
+; 
 
-(defn move-critters! [state] 
-    (let [  {:keys [width height critters]} state
-            next-critters (map #(critter-destination % state) critters)]
-        (swap! app-state assoc :critters next-critters)))
+(def behavior-lonely (behavior :lonely is-near-others?      go-to-neighbor))
+(def behavior-hungry (behavior :hungry is-eating?           go-to-food))
+(def behavior-afraid (behavior :afraid is-away-from-cursor? run-away)) 
+
+(defn behavior-collision [c env]
+  (let [collisions      (filter #(near-critters? c % 10) (:critters env))
+        collision-area  (center-of-points (map :position collisions))]
+    
+    (cond (seq collisions) (set-destination c 10 (random-point env))
+          :else c)))
+
+(defn clamp [val' min' max'] (min max' (max min' val')))
+
+(defn behavior-boundaries [c {:keys [width height]}]
+  (set-destination c 10 [(clamp (-> c :destination first) 0 width)
+                         (clamp (-> c :destination second) 0 height)]))
+
+; TODO: handle behaviors that change environment e.g. (eating, pooping)
+(def critter-default-behaviors
+  [
+   behavior-lonely
+   ; behavior-hungry
+   ; behavior-afraid
+   behavior-collision
+   behavior-boundaries
+   ])
+
+; critters
+(def base-critters 
+  [["Slipper"     :hungry   {:color [:black :white :orange]}]
+   ["Allegra"     :cowardly {:color [:black :orange :white]}]
+   ["Totoro"      :friendly :hungry  {:color [:white :black :black]}]
+   ["Squeaky"     :cowardly :orange]
+   ["Sarah Jane"  :hungry   :cowardly :black]
+   ["Gizmo"       :hungry   :orange]
+   ["Twitch"      :cowardly :black]])
+
+; color is triple of head / torso / body
+(defn make-colors [color] {:color [color color color]})
+
+(def init-critter-state {:hungry 0 :lonely 0 :afraid 0 :bowel 0 })
+
+(def critter-props
+  {:default   {:hungry 5 :afraid 5 :lonely 5 :color (make-colors :white)}
+   :hungry    {:hungry 7}
+   :cowardly  {:afraid 7}
+   :friendly  {:afraid 2 :lonely 7}
+   :black     (make-colors :black)
+   :orange    (make-colors :orange)})
+
+(defrecord Critter [name props state position destination velocity behaviors])
+
+(defn make-critter [name props env]
+  (->Critter name 
+             props 
+             init-critter-state 
+             (random-point env)
+             (random-point env)
+             0
+             critter-default-behaviors))
+
+(defn make-props [options]
+  (reduce #(merge %1 (cond (keyword? %2) (%2 critter-props) :else %2))
+          (:default critter-props) 
+          options))
+
+(defn init-critters [env]
+  (map #(make-critter (first %) (make-props (rest %)) env) 
+       base-critters))
+
+(defn critter-do-behaviors [c env]
+  (reduce #(%2 %1 env) c (:behaviors c)))
+
+(defn critter-next-position [c]
+  (let [pos   (:position c)
+        dest  (:destination c)
+        p     (cartesian->polar (offset dest pos))
+        vel   (min (:r p) (:velocity c))
+        o'    (polar->cartesian (assoc p :r vel))
+        ; vel' (/ 100 (:velocity c))
+        ; o     (offset dest pos)
+        ; o'    [(/ (first o) vel') (/ (second o) vel')]
+        pos'  (add-point pos o')
+        ]
+    (assoc c  :position pos')))
+
+(defonce app-state
+  (let [env       {:width 500 :height 500 :mouse nil}
+        critters  (init-critters env)]
+    (atom (assoc env :critters critters))))
+
+(defn trunc [[x y]] [(Math/round x) (Math/round y)])
+
+(defn critter-report [c]
+  (str (:name c) " " (:state c)  "\n"))
+
+(defn move-critters! [env] 
+  (let [next-critters (map #(critter-next-position (critter-do-behaviors % env)) 
+                           (:critters env))]
+    ; (println (map critter-report next-critters))
+    (swap! app-state assoc :critters next-critters)))
 
 (defn app-loop! [] 
-    (js/setTimeout (fn [] 
-        (move-critters! @app-state)
-        (app-loop!)) 
-    100))
-
-
+  (js/setTimeout (fn [] 
+                   (move-critters! @app-state)
+                   (app-loop!)) 
+                 100))
 
 
 (defn translate [x y] (str "translate(" x "px," y "px)"))
@@ -139,16 +215,22 @@
 (defn on-mouse-move [e]
     (let [  x   (.-clientX e)
             y   (.-clientY e)]
-        ; (println x y)
         (swap! app-state assoc :mouse { :x x :y y})))
 
+(defn critter-bearing [c]
+  (bearing (:position c) (:destination c) ))
 
-(defn module-critter [critter width height] 
-    (let [{:keys [x y]} critter]
-        [:g.module-critter 
-            {:style {:transition "transform 500ms"
-                     :transform (translate x y)}}
-            [:circle {:r 5 :style {:fill "brown"}}]]))
+(defn module-critter [critter] 
+  (let [[x y] (:position critter)
+        [head torso butt] (-> critter :props :color)
+        b  (critter-bearing critter)]
+    [:g.module-critter {:style {:transition "transform 100ms"
+                                :transform (translate x y)}}
+      [:g.critter-inner {:style {:transition "transform 100ms"
+                                 :transform (str "rotate(" b "rad)")}}
+        [:circle {:r 5 :cx 5  :style {:fill butt}}] 
+        [:circle {:r 5 :cx -5 :style {:fill head}}]
+        [:rect {:x -5 :y -5 :width 10 :height 10 :style {:fill torso}}]]]))
 
 (defn module-critter-pen []
     (let [{:keys [width height critters]} @app-state]
@@ -158,7 +240,7 @@
              :on-mouse-move on-mouse-move}
             [:rect {:width width :height height 
                 :style {:fill "gray"}}]
-            [:g.critters (wrap-map module-critter critters width height)]]))
+            [:g.critters (wrap-map module-critter critters)]]))
 
 (defn module-app-root []
     [:section.module-app-root
@@ -167,6 +249,6 @@
 (reagent/render-component [module-app-root]
                           (. js/document (getElementById "app")))
 
-(app-loop!)
+(defonce do-app-loop (app-loop!))
 
 
