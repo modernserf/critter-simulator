@@ -7,11 +7,11 @@
 (defn make-colors [color] {:color [color color color]})
 
 (def critter-props
-  {:default   {:hungry 5 :afraid 5 :lonely 5 :bored 1
+  {:default   {:hungry 5 :afraid 0.5 :lonely 5 :bowel 5 :bored 5
                :color (make-colors :white)}
-   :hungry    {:hungry 7}
-   :cowardly  {:afraid 7}
-   :friendly  {:afraid 2 :lonely 7}
+   :hungry    {:hungry 3}
+   :cowardly  {:afraid 0.2}
+   :friendly  {:afraid 3 :lonely 3}
    :black     (make-colors :black)
    :orange    (make-colors :orange)})
 
@@ -30,6 +30,11 @@
              (point/random env) (point/random env)
              0 0
              (:behaviors env)))
+
+(defn at-threshold? [c prop]
+  (let [threshold (-> c :props prop)
+        value     (-> c :state prop)]
+    (>= value threshold)))
 
 (defn make-list [cs env]
   (map #(make % env) cs))

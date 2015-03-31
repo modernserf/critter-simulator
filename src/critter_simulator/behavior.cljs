@@ -5,21 +5,16 @@
 
 ; increment/decrement state counter k
 ; TODO: increment based on time elapsed vs 1-per-round
-(defn inc-state [c k] (update-in c [:state k] inc))
+(defn inc-state [c k] (update-in c [:state k] #(+ % 0.1)))
 ; decrement until 0
-(defn dec-0 [x] (max 0 (dec x)))
+(defn dec-0 [x] (max 0 (- x 0.1)))
 (defn dec-state [c k] (update-in c [:state k] dec-0))
-
-(defn at-threshold? [c prop]
-  (let [threshold (- 10 (-> c :props prop))
-        value     (-> c :state prop)]
-    (>= value threshold)))
 
 (defn behavior [k pred-recover? fn-threshold]
   (fn [c env]
-    (cond (pred-recover? c env) (dec-state    c k)
-          (at-threshold? c k)   (fn-threshold c env)
-          :else                 (inc-state    c k))))
+    (cond (pred-recover? c env)         (dec-state    c k)
+          (critter/at-threshold? c k)   (fn-threshold c env)
+          :else                         (inc-state    c k))))
 
 (defn find-closest-critter [c cs]
   (let [pos     (:position c)
@@ -69,7 +64,7 @@
             (critter/set-destination c -10 collision-area)
           :else c)))
 
-(defn clamp [val' min' max'] (min max' (max min' val')))
+(def clamp (-> js/goog .-math .-clamp))
 
 (defn boundaries [c {:keys [width height]}]
   (critter/set-destination

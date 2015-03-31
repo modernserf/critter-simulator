@@ -72,9 +72,11 @@
 (defn bearing->rotate [b]
   (str "rotate(" b "rad)"))
 
-(defn module-stat [[k v]]
-  [:div {:style {:padding-right 10}}
-      (str (name k) ": " v )])
+(defn module-stat [[k v] c]
+  [:div {:style {:padding-right 10
+                 :transition "color 0.5s"
+                 :color (and (critter/at-threshold? c k) :red)}}
+      (str (name k) ": " (Math/round v) )])
 
 (defn module-critter-status [c]
   [:div.module-critter-status
@@ -84,7 +86,7 @@
       [:h3 (:name c)]
       [:ul.critter-stats {:style {:display :flex
                                   :padding-bottom 10}}
-          (wrap :li module-stat (:state c))]])
+          (wrap :li module-stat (:state c) c)]])
 
 (defn module-critter-status-group [env]
   [:section.module-critter-status-group
