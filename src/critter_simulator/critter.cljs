@@ -50,14 +50,16 @@
         o'    (point/polar->cartesian (assoc p :r vel))
         pos'  (point/add pos o')
         ]
-    (assoc c  :position pos')))
+    (assoc c  :position pos'
+              :bearing  (cond (> vel 0) (:angle p)
+                              :else (:bearing c)))))
 
 (defn eq? [a b] (= (:name a) (:name b)))
 
 (defn at-rest? [c]
   (point/near? (:position c) (:destination c) 1))
 
-(defn bearing [c] (point/bearing (:position c) (:destination c) ))
+(defn bearing [c] (:bearing c) )
 
 (defn set-destination [c v dest]
   (cond (>= v 0)  (assoc c  :velocity v :destination dest)

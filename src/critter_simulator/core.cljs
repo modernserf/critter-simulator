@@ -72,11 +72,17 @@
 (defn bearing->rotate [b]
   (str "rotate(" b "rad)"))
 
+(def status-emoji {:hungry  "🍕"
+                   :lonely  "😢"
+                   :afraid  "😱"
+                   :bowel   "💩"
+                   :bored   "😒"})
+
 (defn module-stat [[k v] c]
-  [:div {:style {:padding-right 10
-                 :transition "color 0.5s"
-                 :color (and (critter/at-threshold? c k) :red)}}
-      (str (name k) ": " (Math/round v) )])
+  [:div {:style {:padding 10
+                 :transition "opacity 100ms"
+                 :opacity (if (critter/at-threshold? c k) 1 0.3)}}
+      (status-emoji k)])
 
 (defn module-critter-status [c]
   [:div.module-critter-status
