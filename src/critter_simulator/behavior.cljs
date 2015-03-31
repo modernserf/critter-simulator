@@ -64,7 +64,7 @@
             (critter/set-destination c -10 collision-area)
           :else c)))
 
-(def clamp (-> js/goog .-math .-clamp))
+(defn clamp [val' min' max'] (min max' (max min' val')))
 
 (defn boundaries [c {:keys [width height]}]
   (critter/set-destination
