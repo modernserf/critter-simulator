@@ -42,10 +42,13 @@
 ; TODO
 (defn is-eating? [c env] true)
 (defn go-to-food [c env] c)
-
-(defn is-away-from-cursor? [c env] true)
-(defn run-away [c env] c)
 ;
+
+(defn is-away-from-cursor? [c env]
+  (not (point/near? (:position c) (:mouse env) 100)))
+
+(defn run-away [c env]
+  (critter/set-destination c -20 (:mouse env)))
 
 (def lonely (behavior :lonely is-near-others?      go-to-neighbor))
 (def hungry (behavior :hungry is-eating?           go-to-food))
@@ -54,11 +57,14 @@
 (defn collision [c env]
   (let [collisions      (filter #(near-critters? c % 20) (:critters env))
         collision-area  (point/center-of (map :position collisions))]
-    (cond (seq collisions) (critter/set-destination c -10 collision-area)
+    ; TODO: should critters continue towards their destination when they bump?
+    (cond (and (seq collisions) #_(critter/at-rest? c))
+            (critter/set-destination c -10 collision-area)
           :else c)))
 
 (defn clamp [val' min' max'] (min max' (max min' val')))
 
 (defn boundaries [c {:keys [width height]}]
-  (critter/set-destination c 10 [(clamp (-> c :destination first) 0 width)
-                                 (clamp (-> c :destination second) 0 height)]))
+  (critter/set-destination
+    c 10 [(clamp (-> c :destination first) 5 (- width 5))
+          (clamp (-> c :destination second) 5 (- height 5))]))

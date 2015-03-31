@@ -48,6 +48,9 @@
 
 (defn eq? [a b] (= (:name a) (:name b)))
 
+(defn at-rest? [c]
+  (point/near? (:position c) (:destination c) 1))
+
 (defn bearing [c] (point/bearing (:position c) (:destination c) ))
 
 (defn set-destination [c v dest]

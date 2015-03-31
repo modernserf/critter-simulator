@@ -58,7 +58,7 @@
 (defn on-mouse-move [e]
     (let [  x   (.-clientX e)
             y   (.-clientY e)]
-        (swap! app-state assoc :mouse { :x x :y y})))
+      (swap! app-state assoc :mouse [x y])))
 
 (def pi Math/PI)
 
