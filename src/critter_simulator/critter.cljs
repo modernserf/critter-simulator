@@ -52,10 +52,9 @@
 
 (defn set-destination [c v dest]
   (cond (>= v 0)  (assoc c  :velocity v :destination dest)
-        :else     (let [pos   (:position c)
-                        p     (point/cartesian->polar (point/offset pos dest))
-                        p'    (update-in p [:angle] #(+ Math/PI))
-                        o'    (point/polar->cartesian p')
-                        dest' (point/add pos o')]
+        :else     (let [pos     (:position c)
+                        o-inv   (point/offset dest pos)
+                        dest'   (point/add pos o-inv)
+                    ]
                     (assoc c :velocity    (- v)
                              :destination dest'))))

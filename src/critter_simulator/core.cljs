@@ -26,7 +26,7 @@
    ["Gizmo"       :hungry   :orange]
    ["Twitch"      :cowardly :black]])
 
-(defonce app-state
+(def app-state
   (let [env       {:width 500
                    :height 500
                    :mouse nil

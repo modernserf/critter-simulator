@@ -52,9 +52,9 @@
 (def afraid (behavior :afraid is-away-from-cursor? run-away))
 
 (defn collision [c env]
-  (let [collisions      (filter #(near-critters? c % 10) (:critters env))
+  (let [collisions      (filter #(near-critters? c % 20) (:critters env))
         collision-area  (point/center-of (map :position collisions))]
-    (cond (seq collisions) (critter/set-destination c 10 (point/random env))
+    (cond (seq collisions) (critter/set-destination c -10 collision-area)
           :else c)))
 
 (defn clamp [val' min' max'] (min max' (max min' val')))
