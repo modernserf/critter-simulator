@@ -7,7 +7,7 @@
 (defn make-colors [color] {:color [color color color]})
 
 (def critter-props
-  {:default   {:hungry 5 :afraid 5 :lonely 5 :bored 5
+  {:default   {:hungry 5 :afraid 5 :lonely 5 :bored 1
                :color (make-colors :white)}
    :hungry    {:hungry 7}
    :cowardly  {:afraid 7}

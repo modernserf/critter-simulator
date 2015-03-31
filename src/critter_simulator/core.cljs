@@ -12,9 +12,9 @@
 ; TODO: handle behaviors that change environment e.g. (eating, pooping)
 (def critter-default-behaviors
   [
-   behavior/bored
    behavior/lonely
    behavior/hungry
+   behavior/bored
    behavior/afraid
    behavior/collision
    behavior/boundaries
@@ -23,7 +23,7 @@
 (def base-critters
   [["Slipper"     :hungry   {:color [:black :white :orange]}]
    ["Allegra"     :cowardly {:color [:black :orange :white]}]
-   ["Totoro"      :friendly :hungry  {:color [:white :black :black]}]
+   ["Totoro"      :friendly :hungry  {:color [:black :black :white]}]
    ["Squeaky"     :cowardly :orange]
    ["Sarah Jane"  :hungry   :cowardly :black]
    ["Gizmo"       :hungry   :orange]
@@ -55,36 +55,60 @@
                  100))
 
 (defn translate [x y] (str "translate(" x "px," y "px)"))
-(defn wrap-map [f xs & args]
-    (map-indexed (fn [idx it] [:g {:key idx} [apply f it args]]) xs))
+(defn wrap [tag f xs & args]
+    (map-indexed (fn [idx it] [tag {:key idx} [apply f it args]]) xs))
 
 (defn on-mouse-move [e]
     (let [  x   (.-clientX e)
             y   (.-clientY e)]
       (swap! app-state assoc :mouse [x y])))
 
-(def pi Math/PI)
+(defn on-status-hover [c]
+    (swap! app-state assoc :selected-critter c))
 
-(def d-up       0)
-(def d-right    (* pi .5))
-(def d-down     pi)
-(def d-left     (* pi 1.5))
+(defn is-selected? [c env]
+    (critter/eq? c (:selected-critter env)))
 
 (defn bearing->rotate [b]
   (str "rotate(" b "rad)"))
 
-(defn module-critter [c]
+(defn module-stat [[k v]]
+  [:div {:style {:padding-right 10}}
+      (str (name k) ": " v )])
+
+(defn module-critter-status [c]
+  [:div.module-critter-status
+      {:on-mouse-enter #(on-status-hover c)
+       :on-mouse-leave #(on-status-hover nil)
+       :style {:cursor :pointer}}
+      [:h3 (:name c)]
+      [:ul.critter-stats {:style {:display :flex
+                                  :padding-bottom 10}}
+          (wrap :li module-stat (:state c))]])
+
+(defn module-critter-status-group [env]
+  [:section.module-critter-status-group
+      [:h1 "Critters"]
+      (wrap :div module-critter-status (:critters env))])
+
+(defn module-critter [c env]
   (let [[x y] (:position c)
         [head torso butt] (-> c :props :color)
-        b  (critter/bearing c)]
+        b  (critter/bearing c)
+        selected-ring (and (is-selected? c env)
+                           [:circle {:r 20 :style {:stroke :red
+                                                   :fill :none}}])]
     [:g
-      [:g.module-critter {:style {:transition "transform 100ms"
-                                 :transform (translate x y)}}
-       [:g.critter-inner {:style {:transition "transform 100ms"
-                                  :transform (bearing->rotate b)}}
-         [:circle {:r 5 :cy 5  :style {:fill butt}}]
-         [:circle {:r 5 :cy -5 :style {:fill head}}]
-         [:rect {:x -5 :y -5 :width 10 :height 10 :style {:fill torso}}]]]
+        [:g.module-critter {:style {:transition "transform 100ms"
+                                    :transform (translate x y)}}
+            selected-ring
+            [:g.critter-inner {:style {:transition "transform 100ms"
+                                       :transform (bearing->rotate b)}}
+                [:circle {:r 5 :cy 5  :style {:fill butt}}]
+                [:circle {:r 5 :cy -5 :style {:fill head}}]
+                [:rect {:x -5 :y -5 :width 10 :height 10 :style {:fill torso}}]
+
+       ]]
      ]
     ))
 
@@ -96,11 +120,17 @@
       [:rect {:width width
               :height height
               :style {:fill "gray"}}]
-      [:g.critters (wrap-map module-critter critters)]]))
+      [:g.critters (wrap :g module-critter critters env)]]))
+
+
 
 (defn module-app-root []
-  [:section.module-app-root
-    [module-critter-pen @app-state]])
+  [:section.module-app-root {:style {:display :flex}}
+      [module-critter-pen @app-state]
+      [:div {:style {:padding-left 20}}
+          [module-critter-status-group @app-state]]
+
+    ])
 
 (reagent/render-component [module-app-root]
                           (. js/document (getElementById "app")))

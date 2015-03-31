@@ -37,7 +37,7 @@
         :else (point/near? (:position a) (:position b) dist)))
 
 (defn is-near-others? [c env]
-  (some #(near-critters? c % 50) (:critters env)))
+  (some #(near-critters? c % 100) (:critters env)))
 
 ; TODO
 (defn is-eating? [c env] true)
