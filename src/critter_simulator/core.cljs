@@ -19,11 +19,11 @@
 
 (def base-critters
   [["Slipper"     :hungry   {:color [:black :white :orange]}]
-   ; ["Allegra"     :cowardly {:color [:black :orange :white]}]
-   ; ["Totoro"      :friendly :hungry  {:color [:white :black :black]}]
-   ; ["Squeaky"     :cowardly :orange]
-   ; ["Sarah Jane"  :hungry   :cowardly :black]
-   ; ["Gizmo"       :hungry   :orange]
+   ["Allegra"     :cowardly {:color [:black :orange :white]}]
+   ["Totoro"      :friendly :hungry  {:color [:white :black :black]}]
+   ["Squeaky"     :cowardly :orange]
+   ["Sarah Jane"  :hungry   :cowardly :black]
+   ["Gizmo"       :hungry   :orange]
    ["Twitch"      :cowardly :black]])
 
 (defonce app-state
@@ -49,7 +49,7 @@
   (js/setTimeout (fn []
                    (move-critters! @app-state)
                    (app-loop!))
-                 1000))
+                 100))
 
 (defn translate [x y] (str "translate(" x "px," y "px)"))
 (defn wrap-map [f xs & args]
@@ -62,29 +62,26 @@
 
 (def pi Math/PI)
 
-(def d-left     0)
-(def d-down     (/ pi 2))
-(def d-right    (- pi))
-(def d-up       (- d-down))
+(def d-up       0)
+(def d-right    (* pi .5))
+(def d-down     pi)
+(def d-left     (* pi 1.5))
 
-(defn bearing->rotate [bearing]
-  (str "rotate(" (+ Math/PI) "rad)"))
+(defn bearing->rotate [b]
+  (str "rotate(" b "rad)"))
 
 (defn module-critter [c]
   (let [[x y] (:position c)
         [head torso butt] (-> c :props :color)
-        b  (/ (critter/bearing c) Math/PI)]
+        b  (critter/bearing c)]
     [:g
       [:g.module-critter {:style {:transition "transform 100ms"
                                  :transform (translate x y)}}
        [:g.critter-inner {:style {:transition "transform 100ms"
-                                  :transform "rotate(90deg)"}}
-         [:circle {:r 5 :cx 5  :style {:fill butt}}]
-         [:circle {:r 6 :cx -5 :style {:fill head}}]
+                                  :transform (bearing->rotate b)}}
+         [:circle {:r 5 :cy 5  :style {:fill butt}}]
+         [:circle {:r 5 :cy -5 :style {:fill head}}]
          [:rect {:x -5 :y -5 :width 10 :height 10 :style {:fill torso}}]]]
-      [:circle {:r 5 :fill torso
-                :cx (-> c :destination first)
-                :cy (-> c :destination second)}]
      ]
     ))
 

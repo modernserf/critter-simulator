@@ -19,15 +19,15 @@
           (:default critter-props)
           options))
 
-(defrecord Critter [name props state position destination velocity behaviors])
+(defrecord Critter [name props state
+                    position destination
+                    velocity bearing
+                    behaviors])
 
 (defn make [params env]
-  (->Critter (first params)
-             (make-props (rest params))
-             init-critter-state
-             (point/random env)
-             (point/random env)
-             0
+  (->Critter (first params) (make-props (rest params)) init-critter-state
+             (point/random env) (point/random env)
+             0 0
              (:behaviors env)))
 
 (defn make-list [cs env]
@@ -39,7 +39,7 @@
 (defn next-position [c]
   (let [pos   (:position c)
         dest  (:destination c)
-        p     (point/cartesian->polar (point/offset dest pos))
+        p     (point/cartesian->polar (point/offset pos dest))
         vel   (min (:r p) (:velocity c))
         o'    (point/polar->cartesian (assoc p :r vel))
         pos'  (point/add pos o')
@@ -48,8 +48,7 @@
 
 (defn eq? [a b] (= (:name a) (:name b)))
 
-(defn bearing [c]
-  (point/bearing (:position c) (:destination c) ))
+(defn bearing [c] (point/bearing (:position c) (:destination c) ))
 
 (defn set-destination [c v dest]
   (cond (>= v 0)  (assoc c  :velocity v :destination dest)
