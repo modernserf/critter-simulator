@@ -23,5 +23,19 @@
 
 (defn mean [xs] (/ (apply + xs) (count xs)))
 
+(defn to-perimeter [from to radius]
+  (let [d       (distance from to)
+        b       (bearing from to)
+        o       (polar->cartesian {:r (- d radius)
+                                   :angle b})]
+    (add from o)))
+
+(defn alter-bearing [from to b']
+  (let [d       (distance from to)
+        b       (bearing from to)
+        o       (polar->cartesian {:r d
+                                   :angle (+ b b')})]
+    (add from o)))
+
 (defn center-of [ps]
   [(mean (map first ps)) (mean (map second ps))])

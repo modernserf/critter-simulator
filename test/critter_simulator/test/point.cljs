@@ -24,6 +24,17 @@
 (defn eq-ish [a b]
   (> 0.0001 (Math/abs (- a b))))
 
+(deftest offset
+  (let [[x y]   (point/offset p-middle p-up)]
+    (is (eq-ish x 0))
+    (is (eq-ish y -50))))
+
+(deftest add
+  (let [[x y]   (point/add [10 10] [20 20])]
+    (is (= x 30)
+        (= y 30))))
+
+
 (deftest cartesian<->polar
   (let [cpc (-> p-middle    point/cartesian->polar point/polar->cartesian)
         pcp (-> polar       point/polar->cartesian point/cartesian->polar)]
@@ -36,5 +47,9 @@
   (is (= d-up (point/bearing p-middle p-up)))
   (is (= d-down (point/bearing p-middle p-down)))
   (is (= d-left (point/bearing p-middle p-left)))
-  (is (= d-right (point/bearing p-middle p-right)))
-  )
+  (is (= d-right (point/bearing p-middle p-right))))
+
+(deftest to-perimeter
+  (let [[x y]   (point/to-perimeter p-left p-right 10)]
+    (is (eq-ish x 90))
+    (is (eq-ish y 50))))

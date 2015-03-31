@@ -23,16 +23,24 @@
                         (filter #(not= c %) cs))]
     (-> sorted vals first)))
 
+(def distance-lonely 60)
+(def distance-collision 25)
+
+
 (defn go-to-neighbor [c env]
   (let [closest (find-closest-critter c (:critters env))]
-    (critter/set-destination c 10 (:position closest))))
+    (critter/set-destination
+      c 10 (point/to-perimeter
+             (:position c)
+             (:position closest)
+             distance-lonely))))
 
 (defn near-critters? [a b dist]
   (cond (critter/eq? a b) nil
         :else (point/near? (:position a) (:position b) dist)))
 
 (defn is-near-others? [c env]
-  (some #(near-critters? c % 100) (:critters env)))
+  (some #(near-critters? c % (+ 10 distance-lonely)) (:critters env)))
 
 ; TODO
 (defn is-eating? [c env] true)
@@ -40,7 +48,7 @@
 ;
 
 (defn is-away-from-cursor? [c env]
-  (not (point/near? (:position c) (:mouse env) 100)))
+  (not (and (:mouse env) (point/near? (:position c) (:mouse env) 100))))
 
 (defn run-away [c env]
   (critter/set-destination c -20 (:mouse env)))
@@ -57,12 +65,16 @@
 (def bored  (behavior :bored  is-excited?          wander))
 
 (defn collision [c env]
-  (let [collisions      (filter #(near-critters? c % 20) (:critters env))
+  (let [collisions      (filter
+                          #(near-critters? c % distance-collision)
+                          (:critters env))
         collision-area  (point/center-of (map :position collisions))]
     ; TODO: should critters continue towards their destination when they bump?
-    (cond (and (seq collisions) #_(critter/at-rest? c))
-            (critter/set-destination c -10 collision-area)
-          :else c)))
+    (if (seq collisions)
+      (if (critter/at-rest? c)
+        (critter/set-destination c -10 collision-area)
+        (critter/set-destination c 10 (critter/alter-bearing c 1)))
+      c)))
 
 (defn clamp [val' min' max'] (min max' (max min' val')))
 

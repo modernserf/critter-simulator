@@ -16,7 +16,7 @@
    :orange    (make-colors :orange)})
 
 (defn make-props [options]
-  (reduce #(merge %1 (cond (keyword? %2) (%2 critter-props) :else %2))
+  (reduce #(merge %1 (if (keyword? %2) (%2 critter-props) %2))
           (:default critter-props)
           options))
 
@@ -51,8 +51,7 @@
         pos'  (point/add pos o')
         ]
     (assoc c  :position pos'
-              :bearing  (cond (> vel 0) (:angle p)
-                              :else (:bearing c)))))
+              :bearing  (if (> vel 0) (:angle p) (:bearing c)))))
 
 (defn eq? [a b] (= (:name a) (:name b)))
 
@@ -62,10 +61,12 @@
 (defn bearing [c] (:bearing c) )
 
 (defn set-destination [c v dest]
-  (cond (>= v 0)  (assoc c  :velocity v :destination dest)
-        :else     (let [pos     (:position c)
-                        o-inv   (point/offset dest pos)
-                        dest'   (point/add pos o-inv)
-                    ]
-                    (assoc c :velocity    (- v)
-                             :destination dest'))))
+  (if (>= v 0)
+    (assoc c  :velocity v :destination dest)
+    (let [pos     (:position c)
+          dest'   (point/alter-bearing pos dest Math/PI)]
+      (assoc c  :velocity    (- v)
+                :destination dest'))))
+
+(defn alter-bearing [c bearing]
+  (point/alter-bearing (:position c) (:destination c) bearing))
