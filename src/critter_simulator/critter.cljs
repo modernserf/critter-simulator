@@ -1,13 +1,14 @@
 (ns ^:figwheel-always critter-simulator.critter
     (:require [critter-simulator.point :as point]))
 
-(def init-critter-state {:hungry 0 :lonely 0 :afraid 0 :bowel 0 })
+(def init-critter-state {:hungry 0 :lonely 0 :afraid 0 :bowel 0 :bored 0})
 
 ; color is triple of head / torso / body
 (defn make-colors [color] {:color [color color color]})
 
 (def critter-props
-  {:default   {:hungry 5 :afraid 5 :lonely 5 :color (make-colors :white)}
+  {:default   {:hungry 5 :afraid 5 :lonely 5 :bored 5
+               :color (make-colors :white)}
    :hungry    {:hungry 7}
    :cowardly  {:afraid 7}
    :friendly  {:afraid 2 :lonely 7}

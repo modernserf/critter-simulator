@@ -50,9 +50,16 @@
 (defn run-away [c env]
   (critter/set-destination c -20 (:mouse env)))
 
+(defn is-excited? [c env] (not (critter/at-rest? c)))
+(defn wander [c env]
+  (critter/set-destination c 1 (point/random env)))
+
+
 (def lonely (behavior :lonely is-near-others?      go-to-neighbor))
 (def hungry (behavior :hungry is-eating?           go-to-food))
 (def afraid (behavior :afraid is-away-from-cursor? run-away))
+
+(def bored  (behavior :bored  is-excited?          wander))
 
 (defn collision [c env]
   (let [collisions      (filter #(near-critters? c % 20) (:critters env))

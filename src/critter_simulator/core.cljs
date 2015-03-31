@@ -11,11 +11,14 @@
 
 ; TODO: handle behaviors that change environment e.g. (eating, pooping)
 (def critter-default-behaviors
-  [behavior/lonely
+  [
+   behavior/bored
+   behavior/lonely
    behavior/hungry
    behavior/afraid
    behavior/collision
-   behavior/boundaries])
+   behavior/boundaries
+   ])
 
 (def base-critters
   [["Slipper"     :hungry   {:color [:black :white :orange]}]
