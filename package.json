@@ -23,7 +23,6 @@
   },
   "gh-pages-deploy" : {
     "staticpath": "resources/public",
-    "cname": "justinfalcone.com",
     "prep" : ["lein-build"]
   }
 }
