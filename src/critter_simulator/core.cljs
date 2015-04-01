@@ -4,7 +4,8 @@
               [critter-simulator.util.style :refer [style]]
               [critter-simulator.behavior   :as behavior]
               [critter-simulator.point      :as point]
-              [critter-simulator.critter    :as critter]))
+              [critter-simulator.critter    :as critter]
+              [critter-simulator.food       :as food]))
 
 (enable-console-print!)
 
@@ -36,12 +37,12 @@
 ])
 
 (def app-state
-  (let [env       {:width 600
-                   :height 700
-                   :mouse nil
-                   :behaviors critter-default-behaviors}
-        critters  (critter/make-list base-critters env)]
-    (atom (assoc env :critters critters))))
+  (let [env   {:width 600
+               :height 700
+               :mouse nil
+               :behaviors critter-default-behaviors}]
+    (atom (assoc env :critters (critter/make-list base-critters env)
+                     :food     (food/make env)))))
 
 (defn trunc [[x y]] [(Math/round x) (Math/round y)])
 
@@ -106,6 +107,13 @@
       [:h1 "Critters"]
       (wrap :div module-critter-status (:critters env))])
 
+(defn module-food [f]
+  [:g.module-food (style {:transform (apply translate (:position f))})
+      [:circle {:r (:radius f)
+                :style {:fill :green
+                        :stroke :white
+                        :stroke-width 2}}]])
+
 (defn module-critter [c env]
   (let [[x y] (:position c)
         [head torso butt] (-> c :props :color)
@@ -136,6 +144,7 @@
       [:rect {:width width
               :height height
               :style {:fill "gray"}}]
+      [module-food (:food env)]
       [:g.critters (wrap :g module-critter critters env)]]))
 
 

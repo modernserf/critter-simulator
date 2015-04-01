@@ -15,17 +15,18 @@
     (closest-perimeter-distance [self point] collision-radius))
 (def is-colliding? collidable/is-colliding?)
 
-(def init-critter-state {:hungry 0 :lonely 0 :afraid 0 :bowel 0 :bored 0})
+(defn init-critter-state [data]
+  (zipmap (keys data) (map rand (vals data))))
 
 ; color is triple of head / torso / body
 (defn make-colors [color] {:color [color color color]})
 
 (def critter-props
-  {:default   {:hungry 5 :afraid 0.5 :lonely 5 :bowel 5 :bored 5
+  {:default   {:hungry 30 :afraid 0.5 :lonely 5 :bowel 5 :bored 5
                :color (make-colors :white)}
-   :hungry    {:hungry 3}
+   :hungry    {:hungry 10 }
    :cowardly  {:afraid 0.2}
-   :friendly  {:afraid 3 :lonely 3}
+   :friendly  {:afraid 3 :lonely 1}
    :black     (make-colors :black)
    :orange    (make-colors :orange)})
 
@@ -37,10 +38,11 @@
 
 
 (defn make [params env]
-  (Critter.  (first params) (make-props (rest params)) init-critter-state
+  (let [props (make-props (rest params))]
+    (Critter.  (first params) props (init-critter-state props)
              (point/random env) (point/random env)
              0 0
-             (:behaviors env)))
+             (:behaviors env))))
 
 (defn at-threshold? [c prop]
   (let [threshold (-> c :props prop)

@@ -2,6 +2,7 @@
     (:require
         [critter-simulator.point   :as point]
         [critter-simulator.critter :as critter]
+        [critter-simulator.food    :as food]
         [critter-simulator.protocols.collidable :as collidable]))
 
 ; increment/decrement state counter k
@@ -24,7 +25,7 @@
                         (filter #(not= c %) cs))]
     (-> sorted vals first)))
 
-(def distance-lonely 60)
+(def distance-lonely 30)
 
 (defn go-to-neighbor [c env]
   (let [closest (find-closest-critter c (:critters env))]
@@ -35,16 +36,21 @@
              distance-lonely))))
 
 (defn near-critters? [a b dist]
-  (cond (= a b) nil
+  (cond (critter/eq? a b) nil
         :else (point/near? (:position a) (:position b) dist)))
 
 (defn is-near-others? [c env]
   (some #(near-critters? c % (+ 10 distance-lonely)) (:critters env)))
 
-; TODO
-(defn is-eating? [c env] true)
-(defn go-to-food [c env] c)
-;
+(defn is-eating? [c env]
+  (food/near? (:food env) (:position c)))
+
+(defn go-to-food [c env]
+  (critter/set-destination
+      c 10 (point/to-perimeter
+             (:position c)
+             (:position (:food env))
+             (+ 10 food/radius))))
 
 (defn is-away-from-cursor? [c env]
   (not (and (:mouse env) (point/near? (:position c) (:mouse env) 100))))
@@ -63,10 +69,17 @@
 
 (def bored  (behavior :bored  is-excited?          wander))
 
+(defn critter-collisions [c env]
+  (filter #(collidable/is-colliding? c %) (:critters env)))
+
+(defn food-collisions [c env]
+  (if (collidable/is-colliding? c (:food env))
+    [(collidable/position (:food env))]
+    []))
+
 (defn collision [c env]
-  (let [collisions      (filter
-                          #(collidable/is-colliding? c %)
-                          (:critters env))
+  (let [collisions      (concat (critter-collisions c env)
+                                (food-collisions c env))
         collision-area  (point/center-of (map :position collisions))]
     (if (seq collisions)
       (if (critter/at-rest? c)
