@@ -10,7 +10,7 @@
                     velocity bearing
                     behaviors]
   collidable/Collidable
-    (= [a b] (= (:name a) (:name b)))
+    (eq? [a b] (= (:name a) (:name b)))
     (position [self] (:position self))
     (closest-perimeter-distance [self point] collision-radius))
 (def is-colliding? collidable/is-colliding?)
@@ -66,7 +66,7 @@
     (assoc c  :position pos'
               :bearing  (if (> vel 0) (:angle p) (:bearing c)))))
 
-(def eq? collidable/=)
+(def eq? collidable/eq?)
 
 (defn at-rest? [c]
   (point/near? (:position c) (:destination c) 1))

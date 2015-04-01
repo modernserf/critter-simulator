@@ -7,7 +7,7 @@
 
 (defrecord Food [position radius]
   collidable/Collidable
-    (= [a b] (= a b))
+    (eq? [a b] (= a b))
     (position [self] (:position self))
     (closest-perimeter-distance [_ _] radius))
 
