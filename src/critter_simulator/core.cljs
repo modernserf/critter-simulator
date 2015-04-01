@@ -30,11 +30,14 @@
    ["Gizmo"       :hungry   {:color [:white :orange :orange]}]
    ["Twitch"      :cowardly :black]
    ["Professor Popcorn" :hungry {:color [:orange :white :white]}]
-   ["Jareth"      :hungry :cowardly :orange]])
+   ["Jareth"      :hungry :cowardly :orange]
+   ["Onigiri"     :cowardly {:color [:black :white :white]}]
+   ["Pui Pui"     :hungry   {:color [:orange :white :white]}]
+])
 
 (def app-state
-  (let [env       {:width 500
-                   :height 500
+  (let [env       {:width 600
+                   :height 700
                    :mouse nil
                    :behaviors critter-default-behaviors}
         critters  (critter/make-list base-critters env)]

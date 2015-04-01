@@ -1,5 +1,19 @@
 (ns ^:figwheel-always critter-simulator.critter
-    (:require [critter-simulator.point :as point]))
+    (:require
+        [critter-simulator.point :as point]
+        [critter-simulator.protocols.collidable :as collidable]))
+
+(def collision-radius 10)
+
+(defrecord Critter [name props state
+                    position destination
+                    velocity bearing
+                    behaviors]
+  collidable/Collidable
+    (= [a b] (= (:name a) (:name b)))
+    (position [self] (:position self))
+    (closest-perimeter-distance [self point] collision-radius))
+(def is-colliding? collidable/is-colliding?)
 
 (def init-critter-state {:hungry 0 :lonely 0 :afraid 0 :bowel 0 :bored 0})
 
@@ -20,13 +34,10 @@
           (:default critter-props)
           options))
 
-(defrecord Critter [name props state
-                    position destination
-                    velocity bearing
-                    behaviors])
+
 
 (defn make [params env]
-  (->Critter (first params) (make-props (rest params)) init-critter-state
+  (Critter.  (first params) (make-props (rest params)) init-critter-state
              (point/random env) (point/random env)
              0 0
              (:behaviors env)))
@@ -53,7 +64,7 @@
     (assoc c  :position pos'
               :bearing  (if (> vel 0) (:angle p) (:bearing c)))))
 
-(defn eq? [a b] (= (:name a) (:name b)))
+(def eq? collidable/=)
 
 (defn at-rest? [c]
   (point/near? (:position c) (:destination c) 1))
@@ -70,3 +81,4 @@
 
 (defn alter-bearing [c bearing]
   (point/alter-bearing (:position c) (:destination c) bearing))
+

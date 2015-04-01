@@ -1,7 +1,8 @@
 (ns ^:figwheel-always critter-simulator.behavior
     (:require
-              [critter-simulator.point   :as point]
-              [critter-simulator.critter :as critter]))
+        [critter-simulator.point   :as point]
+        [critter-simulator.critter :as critter]
+        [critter-simulator.protocols.collidable :as collidable]))
 
 ; increment/decrement state counter k
 ; TODO: increment based on time elapsed vs 1-per-round
@@ -24,8 +25,6 @@
     (-> sorted vals first)))
 
 (def distance-lonely 60)
-(def distance-collision 25)
-
 
 (defn go-to-neighbor [c env]
   (let [closest (find-closest-critter c (:critters env))]
@@ -36,7 +35,7 @@
              distance-lonely))))
 
 (defn near-critters? [a b dist]
-  (cond (critter/eq? a b) nil
+  (cond (= a b) nil
         :else (point/near? (:position a) (:position b) dist)))
 
 (defn is-near-others? [c env]
@@ -66,10 +65,9 @@
 
 (defn collision [c env]
   (let [collisions      (filter
-                          #(near-critters? c % distance-collision)
+                          #(collidable/is-colliding? c %)
                           (:critters env))
         collision-area  (point/center-of (map :position collisions))]
-    ; TODO: should critters continue towards their destination when they bump?
     (if (seq collisions)
       (if (critter/at-rest? c)
         (critter/set-destination c -10 collision-area)
