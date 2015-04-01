@@ -34,14 +34,8 @@
               :source-paths ["src"]
               :compiler {:output-to "resources/public/js/compiled/critter_simulator.js"
                          :main critter-simulator.core
-                         :optimizations :advanced
-                         :pretty-print false}}
-             {:id "test"
-              :source-paths ["test"]
-              :compiler {:output-to "target/cljs/testable.js"
-                         :main critter-simulator.test.point
-                         :optimizations :whitespace
-                         :pretty-print true}}]
+                         :optimizations :none
+                         :pretty-print false}}]
     :test-commands {"unit-tests" ["slimerjs" :runner
                                   "target/cljs/testable.js"]}}
 
