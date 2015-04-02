@@ -3,7 +3,7 @@
         [critter-simulator.point :as point]
         [critter-simulator.protocols.collidable :as collidable]))
 
-(def radius 30)
+(def radius 20)
 
 (defrecord Food [position radius]
   collidable/Collidable

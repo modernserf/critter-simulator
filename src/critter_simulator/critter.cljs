@@ -12,7 +12,7 @@
   collidable/Collidable
     (eq? [a b] (= (:name a) (:name b)))
     (position [self] (:position self))
-    (closest-perimeter-distance [self point] collision-radius))
+    (closest-perimeter-distance [_ _] collision-radius))
 
 (defn init-critter-state [data]
   (zipmap (keys data) (map rand (vals data))))
@@ -33,8 +33,6 @@
   (reduce #(merge %1 (if (keyword? %2) (%2 critter-props) %2))
           (:default critter-props)
           options))
-
-
 
 (defn make [params env]
   (let [props (make-props (rest params))]

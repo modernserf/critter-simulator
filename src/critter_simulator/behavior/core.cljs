@@ -1,4 +1,4 @@
-(ns ^:figwheel-always critter-simulator.behavior
+(ns ^:figwheel-always critter-simulator.behavior.core
     (:require
         [critter-simulator.point   :as point]
         [critter-simulator.critter :as critter]

@@ -1,25 +1,14 @@
 (ns ^:figwheel-always critter-simulator.core
     (:require
-              [reagent.core                 :as reagent   :refer [atom]]
-              [critter-simulator.util.style               :refer [style]]
-              [critter-simulator.behavior   :as behavior]
-              [critter-simulator.point      :as point]
-              [critter-simulator.critter    :as critter]
-              [critter-simulator.food       :as food]
-              [critter-simulator.views.core :as views]))
+        [reagent.core                 :as reagent   :refer [atom]]
+        [critter-simulator.util.style               :refer [style]]
+        [critter-simulator.behavior.defaults   :refer [critter-default-behaviors]]
+        [critter-simulator.point      :as point]
+        [critter-simulator.critter    :as critter]
+        [critter-simulator.food       :as food]
+        [critter-simulator.views.core :as views]))
 
 (enable-console-print!)
-
-; TODO: handle behaviors that change environment e.g. (eating, pooping)
-(def critter-default-behaviors
-  [
-   behavior/lonely
-   behavior/hungry
-   ; behavior/bored
-   behavior/afraid
-   behavior/collision
-   behavior/boundaries
-   ])
 
 (def base-critters
   [["Slipper"     :hungry   {:color [:black :white :orange]}]
