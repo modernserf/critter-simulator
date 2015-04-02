@@ -13,7 +13,7 @@
 
 ; reference implementation of is-colliding, using other methods
 (defn is-colliding? [a b]
-  (and (not (= a b))
+  (and (not (eq? a b))
        (let [a-pos       (position a)
              b-pos       (position b)
              a-distance  (closest-perimeter-distance a b-pos)

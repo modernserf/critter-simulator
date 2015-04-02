@@ -13,7 +13,6 @@
     (eq? [a b] (= (:name a) (:name b)))
     (position [self] (:position self))
     (closest-perimeter-distance [self point] collision-radius))
-(def is-colliding? collidable/is-colliding?)
 
 (defn init-critter-state [data]
   (zipmap (keys data) (map rand (vals data))))

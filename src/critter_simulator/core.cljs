@@ -15,7 +15,7 @@
   [
    behavior/lonely
    behavior/hungry
-   behavior/bored
+   ; behavior/bored
    behavior/afraid
    behavior/collision
    behavior/boundaries

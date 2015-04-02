@@ -23,7 +23,6 @@
 (defn bearing->rotate [b]
   (str "rotate(" b "rad)"))
 
-
 (def status-emoji {:hungry  "🍕"
                    :lonely  "😢"
                    :afraid  "😱"
@@ -90,12 +89,9 @@
       [module-food (:food @env)]
       [:g.critters (wrap :g module-critter critters env)]]))
 
-
-
 (defn module-app-root [app-state]
   [:section.module-app-root.flex
       [module-critter-pen app-state]
       [:div {:style {:padding-left 20}}
           [module-critter-status-group app-state]]
-
     ])
