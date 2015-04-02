@@ -1,15 +1,14 @@
 (ns ^:figwheel-always critter-simulator.core
     (:require
               [reagent.core                 :as reagent   :refer [atom]]
-              [critter-simulator.util.style :refer [style]]
+              [critter-simulator.util.style               :refer [style]]
               [critter-simulator.behavior   :as behavior]
               [critter-simulator.point      :as point]
               [critter-simulator.critter    :as critter]
-              [critter-simulator.food       :as food]))
+              [critter-simulator.food       :as food]
+              [critter-simulator.views.core :as views]))
 
 (enable-console-print!)
-
-;; define your app data so that it doesn't get over-written on reload
 
 ; TODO: handle behaviors that change environment e.g. (eating, pooping)
 (def critter-default-behaviors
@@ -61,104 +60,7 @@
                    (app-loop!))
                  100))
 
-(defn translate [x y] (str "translate(" x "px," y "px)"))
-(defn wrap [tag f xs & args]
-    (map-indexed (fn [idx it] [tag {:key idx} [apply f it args]]) xs))
-
-(defn on-mouse-move [e]
-  (if e
-    (let [x   (.-clientX e)
-          y   (.-clientY e)]
-      (swap! app-state assoc :mouse [x y]))
-    (swap! app-state assoc :mouse nil)))
-
-(defn on-status-hover [c]
-    (swap! app-state assoc :selected-critter c))
-
-(defn is-selected? [c env]
-    (critter/eq? c (:selected-critter env)))
-
-(defn bearing->rotate [b]
-  (str "rotate(" b "rad)"))
-
-(def status-emoji {:hungry  "🍕"
-                   :lonely  "😢"
-                   :afraid  "😱"
-                   :bowel   "💩"
-                   :bored   "😒"})
-
-(defn module-stat [[k v] c]
-  [:div {:style {:padding 10
-                 :transition "opacity 100ms"
-                 :opacity (if (critter/at-threshold? c k) 1 0.3)}}
-      (status-emoji k)])
-
-(defn module-critter-status [c]
-  [:div.module-critter-status
-      {:on-mouse-enter #(on-status-hover c)
-       :on-mouse-leave #(on-status-hover nil)
-       :style {:cursor :pointer}}
-      [:h3 (:name c)]
-      [:ul.critter-stats.flex {:style {:padding-bottom 10}}
-          (wrap :li module-stat (:state c) c)]])
-
-(defn module-critter-status-group [env]
-  [:section.module-critter-status-group
-      [:h1 "Critters"]
-      (wrap :div module-critter-status (:critters env))])
-
-(defn module-food [f]
-  [:g.module-food (style {:transform (apply translate (:position f))})
-      [:circle {:r (:radius f)
-                :style {:fill :green
-                        :stroke :white
-                        :stroke-width 2}}]])
-
-(defn module-critter [c env]
-  (let [[x y] (:position c)
-        [head torso butt] (-> c :props :color)
-        b  (critter/bearing c)
-        selected-ring (and (is-selected? c env)
-                           [:circle {:r 20 :style {:stroke :red
-                                                   :fill :none}}])]
-    [:g
-        [:g.module-critter (style {:transition "transform 100ms"
-                                   :transform (translate x y)})
-            selected-ring
-            [:g.critter-inner (style {:transition "transform 100ms"
-                                      :transform (bearing->rotate b)})
-                [:circle {:r 5 :cy 5  :style {:fill butt}}]
-                [:circle {:r 5 :cy -5 :style {:fill head}}]
-                [:rect {:x -5 :y -5 :width 10 :height 10 :style {:fill torso}}]
-
-       ]]
-     ]
-    ))
-
-(defn module-critter-pen [env]
-  (let [{:keys [width height critters]} env]
-    [:svg.module-critter-pen {:width width
-                              :height height
-                              :on-mouse-move on-mouse-move
-                              :on-mouse-leave #(on-mouse-move nil)}
-      [:rect {:width width
-              :height height
-              :style {:fill "gray"}}]
-      [module-food (:food env)]
-      [:g.critters (wrap :g module-critter critters env)]]))
-
-
-
-(defn module-app-root []
-  [:section.module-app-root.flex
-      [module-critter-pen @app-state]
-      [:div {:style {:padding-left 20}}
-          [module-critter-status-group @app-state]]
-
-    ])
-
-(reagent/render-component [module-app-root]
+(reagent/render-component [views/module-app-root app-state]
                           (. js/document (getElementById "app")))
 
 (defonce do-app-loop (app-loop!))
-

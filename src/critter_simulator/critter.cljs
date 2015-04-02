@@ -83,4 +83,3 @@
 
 (defn alter-bearing [c bearing]
   (point/alter-bearing (:position c) (:destination c) bearing))
-
