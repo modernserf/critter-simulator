@@ -87,12 +87,12 @@
               :height height
               :style {:fill "gray"}}]
       [module-food (:food @env)]
-      [:g.critters (wrap :g module-critter critters env)]]))
+      [:g.critters (wrap :g module-critter (vals critters) env)]]))
 
 (defn module-app-root [app-state]
   [:section.module-app-root.flex
       [module-critter-pen app-state]
       [:div {:style {:padding-left 20}}
-          [module-critter-status-group app-state]
+          ; [module-critter-status-group app-state]
           ]
     ])

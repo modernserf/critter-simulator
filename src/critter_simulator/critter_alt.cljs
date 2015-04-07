@@ -1,6 +1,6 @@
 (ns ^:figwheel-always critter-simulator.critter-alt
   (:require-macros [cljs.core.async.macros :refer [go]])
-  (:require [cljs.core.async :refer [chan <! >!]]
+  (:require [cljs.core.async :refer [chan <! >! put!]]
             [critter-simulator.point :as point]))
 
 
@@ -8,21 +8,39 @@
 ; [:name {params}]
 
 ; move behavior
-(defn move [reply-ch]
-  (let [ch (chan)]
+
+
+; TODO: update based on last timestamp?
+(defn next-state [state params]
+  (let [s (merge @state params)
+        next-pos (point/add
+                   (:position s)
+                   (point/polar->cartesian {:r (:velocity s)
+                                            :angle (:bearing s)}))]
+    (assoc s :position next-pos)))
+
+
+(defn set-state! [c next-state]
+  (swap! (:state c) merge next-state))
+
+(defn move [c]
+  (let [ch (chan)
+        parent-ch (:channel c)]
     (go (while true
-          (let [[msg params] (<! ch)
-                bearing (:bearing params)]
+          (let [[msg state] (<! ch)]
             (case msg
-              :collision (>! reply-ch [:set {:bearing  (+ 1 bearing)
-                                             :velocity 10}])
-              :default))))))
-
-
-
-
-
-
+              :state  (>! parent-ch [:set (next-state state nil)])
+              :collision
+                (let [s @state]
+                    (>! parent-ch
+                        [:set (next-state
+                                state
+                                {:bearing   (+ 1 (:bearing s))
+                                 :velocity  10})
+                         ])
+                    (>! ch [:state state]))
+              :default ))))
+    ch))
 
 (def default-props
   { :color [:white :white :white]})
@@ -33,7 +51,7 @@
 (defn init-state [props env]
   (atom {:position (point/random env)
    :bearing (rand (* 2 Math/PI))
-   :velocity 10
+   :velocity 0
    :hungry 0
    :cowardly 0
    :lonely 0 }))
@@ -48,15 +66,25 @@
 
 (defn make [[name props] env]
   (let [ch (chan 5)
-        c (Critter. name (init-props props env) (init-state props env) ch)]
-    ; TODO: how to maintain critter identity/ connection to channel
+        out-ch (:channel env)
+        c (Critter. name
+                    (init-props props env)
+                    (init-state props env)
+                    ch)
+        mv (move c)]
+    (put! mv [:state (:state c)])
+    (go (while true
+          (let [[msg data] (<! ch)]
+            (case msg
+              :set
+                (do
+                  (set-state! c data)
+                  (>! out-ch [:critter c]))
+              :default))
+          ))
     c))
 
-(defn make-list [cs env] (map #(make % env) cs))
+(defn make-list [cs env]
+  (let [vs (map #(make % env) cs)]
+    (reduce #(assoc %1 (:name %2) %2) {} vs)))
 
-(defn execute! [c]
-  (let [next-pos (point/add
-                   (position c)
-                   (point/polar->cartesian {:r (velocity c)
-                                            :angle (bearing c)}))]
-    (swap! (:state c) assoc :position next-pos)))
