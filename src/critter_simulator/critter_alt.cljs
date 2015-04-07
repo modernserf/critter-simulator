@@ -4,15 +4,6 @@
             [critter-simulator.point :as point]))
 
 
-; message format
-; [:name {params}]
-
-; move behavior
-
-(defn timeout [ms]
-  (let [c (chan)]
-    (js/setTimeout (fn [] (close! c)) ms)
-    c))
 
 
 ; TODO: update based on last timestamp?
@@ -28,29 +19,37 @@
 (defn set-state! [c next-state]
   (swap! (:state c) merge next-state))
 
+; message format
+; [:name {params}]
+
+; move behavior
 (defn move [c]
   (let [ch (chan)
         parent-ch (:channel c)]
     (go (while true
           (let [[msg state] (<! ch)]
-            (println "move received " msg)
+            ; (println "move received " msg)
             (case msg
               :state
                 (do 
                   (>! parent-ch [:set (next-state state nil)])
                   (when (> (:velocity @state) 0)
-                    (js/setTimeout #(put! ch [:state state]) 400)))
+                    (js/setTimeout (fn []
+                                     (put! ch [:state state])) 100)))
               :collision
-                (let [s @state]
+                (do
+                  
                     (>! parent-ch
                         [:set (next-state
                                 state
                                 {
-                                 ; :bearing   (+ Math/PI (:bearing s))
-                                 :velocity 0
+                                 :bearing   (+ Math/PI (:bearing @state))
+                                 :velocity 10
                                  })
                          ])
-                    (>! ch [:state state]))
+                    ; (println (:velocity @state))
+                    ; (put! ch [:state state])
+                    )
               :default ))))
     ch))
 
@@ -69,7 +68,7 @@
 (defrecord Critter [state channel])
 
 (defn make [[name props] env]
-  (let [ch (chan 5)
+  (let [ch (chan)
         out-ch (:channel env)
         c (Critter. (init-state name props env) ch)
         mv-ch (move c)]
