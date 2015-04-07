@@ -1,6 +1,5 @@
 (ns ^:figwheel-always critter-simulator.views.core
     (:require
-        [critter-simulator.critter-alt    :as critter]
         [critter-simulator.util.style     :refer [style]]))
 
 (defn translate [x y] (str "translate(" x "px," y "px)"))
@@ -57,9 +56,9 @@
                         :stroke-width 2}}]])
 
 (defn module-critter [c env]
-  (let [[x y] (critter/position c)
-        [head torso butt] (-> c :props :color)
-        b  (critter/bearing c)
+  (let [[x y] (:position @c)
+        [head torso butt] (:color @c)
+        b  (:bearing @c)
         selected-ring (and (is-selected? c @env)
                            [:circle {:r 20 :style {:stroke :red
                                                    :fill :none}}])]

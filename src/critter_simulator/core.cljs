@@ -1,7 +1,7 @@
 (ns ^:figwheel-always critter-simulator.core
-    (:require-macros [cljs.core.async.macros :refer [go]])
+    (:require-macros [cljs.core.async.macros :refer [go go-loop]])
     (:require
-        [cljs.core.async              :refer [chan <! >!]]
+        [cljs.core.async              :refer [chan <! >! put! timeout]]
         [reagent.core                 :as reagent   :refer [atom]]
         [critter-simulator.critter-alt    :as critter]
         [critter-simulator.food       :as food]
@@ -9,7 +9,16 @@
 
 (enable-console-print!)
 
-
+(defn debounce [in ms]
+  (let [out (chan)]
+    (go-loop [last-val nil]
+      (let [val (if (nil? last-val) (<! in) last-val)
+            timer (timeout ms)
+            [new-val ch] (alts! [in timer])]
+        (condp = ch
+          timer (do (>! out val) (recur nil))
+          in (recur new-val))))
+    out))
 
 (def base-env
   {:width 500 :height 500 :channel (chan 10)})
@@ -32,35 +41,44 @@
 (defn init-env []
   (atom (assoc base-env :critters base-critters)))
 
-(defn boundaries [env ch]
-  )
+(defn in-bounds? [[x y] {:keys [width height]}]
+  (and (< 0 x width) (< 0 y height)))
 
 
 
-(defn handle-critter [critter env]
-  (println critter)
-  (swap! env assoc-in [:critters (:name critter)] critter)
-  ; replace changed critter
-  env)
 
-
-
+(defn handle-critter! [c env]
+  (let [cstate (:state c)
+        name   (:name c)]
+    (swap! env assoc-in [:critters name] cstate)
+    (when-not (in-bounds? (:position @cstate) @env)
+      (put! (:channel c) [:collision]))
+    env))
 
 (defn render [env]
   (reagent/render-component [views/module-app-root env]
                             (. js/document (getElementById "app"))))
 
+(def render-ch
+  (let [ch (chan 10)
+        d  (debounce ch 100)]
+    (go (while true
+          (let [env (<! d)]
+            ; (println "render received " env)
+            (render env))))
+    ch))
+
 (defn make-world []
   (let [env    (init-env)
-        ch    (:channel base-env)
-        render-ch (chan 10)]
-    (render env)
+        ch    (:channel base-env)]
+    ; (println "env is" env)
     (go (while true
           (let [[msg params] (<! ch)]
+            ; (println "world received msg")
             (case msg
-              :critter (>! render-ch (handle-critter params env))
-              :default))
-          (let [[msg next-env] (<! render-ch)]
-            (render next-env))))))
+              :critter (>! render-ch (handle-critter! params env))
+              :default))))
+    (put! render-ch env)
+    ))
 
 (defonce world (make-world))
