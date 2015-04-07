@@ -1,7 +1,7 @@
 (ns ^:figwheel-always critter-simulator.views.core
-    (:require 
-        [critter-simulator.critter    :as critter]
-        [critter-simulator.util.style               :refer [style]]))
+    (:require
+        [critter-simulator.critter-alt    :as critter]
+        [critter-simulator.util.style     :refer [style]]))
 
 (defn translate [x y] (str "translate(" x "px," y "px)"))
 (defn wrap [tag f xs & args]
@@ -18,7 +18,7 @@
     (swap! env assoc :selected-critter c))
 
 (defn is-selected? [c env]
-    (critter/eq? c (:selected-critter env)))
+    (= c (:selected-critter env)))
 
 (defn bearing->rotate [b]
   (str "rotate(" b "rad)"))
@@ -32,7 +32,7 @@
 (defn module-stat [[k v] c]
   [:div {:style {:padding 10
                  :transition "opacity 100ms"
-                 :opacity (if (critter/at-threshold? c k) 1 0.3)}}
+                 :opacity 0.3}}
       (status-emoji k)])
 
 (defn module-critter-status [c env]
@@ -42,7 +42,7 @@
        :style {:cursor :pointer}}
       [:h3 (:name c)]
       [:ul.critter-stats.flex {:style {:padding-bottom 10}}
-          (wrap :li module-stat (:state c) c)]])
+          (wrap :li module-stat @(:state c) c)]])
 
 (defn module-critter-status-group [env]
   [:section.module-critter-status-group
@@ -57,7 +57,7 @@
                         :stroke-width 2}}]])
 
 (defn module-critter [c env]
-  (let [[x y] (:position c)
+  (let [[x y] (critter/position c)
         [head torso butt] (-> c :props :color)
         b  (critter/bearing c)
         selected-ring (and (is-selected? c @env)
@@ -93,5 +93,6 @@
   [:section.module-app-root.flex
       [module-critter-pen app-state]
       [:div {:style {:padding-left 20}}
-          [module-critter-status-group app-state]]
+          [module-critter-status-group app-state]
+          ]
     ])
