@@ -1,41 +1,30 @@
 (ns ^:figwheel-always critter-simulator.core
     (:require-macros [cljs.core.async.macros :refer [go go-loop]])
     (:require
-        [cljs.core.async              :refer [chan <! >! put! take! timeout]]
-        [reagent.core                 :as reagent   :refer [atom]]
+        [cljs.core.async :as async :refer [<! >!]]
+        [reagent.core                 :as reagent]
         [critter-simulator.critter-alt    :as critter]
         [critter-simulator.food       :as food]
         [critter-simulator.views.core :as views]))
 
 (enable-console-print!)
 
-(defn debounce [in ms]
-  (let [out (chan)]
-    (go-loop [last-val nil]
-      (let [val (if (nil? last-val) (<! in) last-val)
-            timer (timeout ms)
-            [new-val ch] (alts! [in timer])]
-        (condp = ch
-          timer (do (>! out val) (recur nil))
-          in (recur new-val))))
-    out))
-
 (def base-env
-  {:width 500 :height 500 :channel (chan)})
+  {:width 500 :height 500 :channel (async/chan)})
 
 (def base-critters
   (critter/make-list
     [["Slipper"    {:color [:black :white :orange]}]
-     ; ["Allegra"    {:color [:black :orange :white]}]
-     ; ["Totoro"     {:color [:white :black :black]}]
-     ; ["Squeaky"    {:color [:orange :orange :orange]}]
-     ; ["Sarah Jane" {:color [:black :black :black]}]
-     ; ["Gizmo"      {:color [:white :orange :orange]}]
-     ; ["Twitch"     {:color [:black :black :black]}]
-     ; ["Professor Popcorn" {:color [:orange :white :white]}]
-     ; ["Jareth"      {:color [:orange :orange :orange]}]
-     ; ["Onigiri"     {:color [:black :white :white]}]
-     ; ["Pui Pui"     {:color [:orange :white :white]}]
+     ["Allegra"    {:color [:black :orange :white]}]
+     ["Totoro"     {:color [:white :black :black]}]
+     ["Squeaky"    {:color [:orange :orange :orange]}]
+     ["Sarah Jane" {:color [:black :black :black]}]
+     ["Gizmo"      {:color [:white :orange :orange]}]
+     ["Twitch"     {:color [:black :black :black]}]
+     ["Professor Popcorn" {:color [:orange :white :white]}]
+     ["Jareth"      {:color [:orange :orange :orange]}]
+     ["Onigiri"     {:color [:black :white :white]}]
+     ["Pui Pui"     {:color [:orange :white :white]}]
   ] base-env))
 
 (defn init-env []
@@ -44,41 +33,43 @@
 (defn in-bounds? [[x y] {:keys [width height]}]
   (and (< 0 x width) (< 0 y height)))
 
-
-
-
-(defn handle-critter! [c env]
-  (let [cstate (:state c)
-        name   (:name c)]
-    (swap! env assoc-in [:critters name] cstate)
-    (when-not (in-bounds? (:position @cstate) @env)
-      (put! (:channel c) [:collision]))
+(defn handle-critter! [c env next-state]
+  (let [name   (-> c :state deref :name)]
+    ; update critter in env
+    (swap! (-> env deref :critters (get name)) merge next-state)
+    ; (println env name next-state)
     env))
 
 (defn render [env]
+  (println "do render")
   (reagent/render-component [views/module-app-root env]
                             (. js/document (getElementById "app"))))
 
-(defn render-loop [ch]
-  (take! ch #(render %))
-  (js/setTimeout #(render-loop ch) 100))
-
 (def render-ch
-  (let [ch (chan)]
-    (render-loop ch)
+  "render-ch expects env"
+  (let [ch (async/chan (async/dropping-buffer 1))]
+    (go-loop []
+      (<! (async/timeout 500))
+      (render (<! ch))
+      (recur))
     ch))
+
+
 
 (defn make-world []
   (let [env    (init-env)
         ch    (:channel base-env)]
     ; (println "env is" env)
-    (go (while true
-          (let [[msg params] (<! ch)]
-            ; (println "world received msg")
-            (case msg
-              :critter (>! render-ch (handle-critter! params env))
-              :default))))
-    (put! render-ch env)
+    (render env)
+    (go-loop []
+      (let [[msg item params] (<! ch)]
+        ; (println
+        ;   "world received " msg
+        ;   "for" (-> item :state deref :name)
+        ;   "to" params)
+        (case msg
+          :critter-move (>! render-ch (handle-critter! item env params)))
+        (recur)))
     ))
 
 (defonce world (make-world))
