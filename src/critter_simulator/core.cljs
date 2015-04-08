@@ -21,8 +21,6 @@
      ["Sarah Jane" {:color [:black :black :black]}]
      ["Gizmo"      {:color [:white :orange :orange]}]
      ["Twitch"     {:color [:black :black :black]}]
-     ["Professor Popcorn" {:color [:orange :white :white]}]
-     ["Jareth"      {:color [:orange :orange :orange]}]
      ["Onigiri"     {:color [:black :white :white]}]
      ["Pui Pui"     {:color [:orange :white :white]}]
   ] base-env))
@@ -34,9 +32,11 @@
   (and (< 0 x width) (< 0 y height)))
 
 (defn handle-critter! [c env next-state]
-  (let [name   (-> c :state deref :name)]
+  (let [state  @(:state c)
+        name   (:name state)
+        state' (merge state next-state)]
     ; update critter in env
-    (swap! (-> env deref :critters (get name)) merge next-state)
+    (reset! (-> env deref :critters (get name)) state')
     ; (println env name next-state)
     env))
 
@@ -49,7 +49,7 @@
   "render-ch expects env"
   (let [ch (async/chan (async/dropping-buffer 1))]
     (go-loop []
-      (<! (async/timeout 500))
+      (<! (async/timeout 100))
       (render (<! ch))
       (recur))
     ch))

@@ -4,55 +4,8 @@
 
             [critter-simulator.point :as point]))
 
-
-
-
-; TODO: update based on last timestamp?
-; (defn next-state [state params]
-;   (let [s (merge @state params)
-;         next-pos (point/add
-;                    (:position s)
-;                    (point/polar->cartesian {:r (:velocity s)
-;                                             :angle (:bearing s)}))]
-;     (assoc s :position next-pos)))
-
-
-(defn set-state! [c next-state]
-  (swap! (:state c) merge next-state))
-
 ; message format
 ; [:name {params}]
-
-; move behavior
-; (defn move [c]
-;   (let [ch (chan)
-;         parent-ch (:channel c)]
-;     (go (while true
-;           (let [[msg state] (<! ch)]
-;             ; (println "move received " msg)
-;             (case msg
-;               :state
-;                 (do
-;                   (>! parent-ch [:set (next-state state nil)])
-;                   (when (> (:velocity @state) 0)
-;                     (js/setTimeout (fn []
-;                                      (put! ch [:state state])) 100)))
-;               :collision
-;                 (do
-
-;                     (>! parent-ch
-;                         [:set (next-state
-;                                 state
-;                                 {
-;                                  :bearing   (+ Math/PI (:bearing @state))
-;                                  :velocity 10
-;                                  })
-;                          ])
-;                     ; (println (:velocity @state))
-;                     ; (put! ch [:state state])
-;                     )
-;               :default ))))
-;     ch))
 
 (defn next-pos [c {:keys [position velocity bearing]}]
   (point/add
@@ -60,20 +13,35 @@
     (point/polar->cartesian {:r velocity
                              :angle bearing})))
 
-
 (defn body [self ch-out]
   (let [ch-in (async/chan)]
-    (go-loop []
-      (let [[msg params] (<! ch-in)]
-        (println "body received" msg)
+    (go-loop [[msg params] (<! ch-in)]
+      (let []
         (case msg
           :move (>! ch-out [:critter-move
                             self
                             {:position (next-pos self params)}]))
+        (recur (<! ch-in))))
+    ch-in))
+
+(defn avoid-obstacle [self ch-out]
+  (let [ch-in (async/chan)]
+    (go-loop []
+      (let [[msg params] (<! ch-in)]
+        (case msg
+          :obstacle (>! ch-out [:move
+                                self
+                                {:bearing (+ Math/PI (:bearing params))}])
+          :default)
         (recur)))
     ch-in))
 
-
+(defn executive [ch-in self ch-out]
+  (go-loop []
+    (<! (async/timeout 100))
+    (>! ch-out [:move @(:state self)])
+    (recur))
+  ch-in)
 
 (defn init-state [name props env]
   (atom (merge
@@ -92,11 +60,9 @@
 (defn make [[name props] env]
   (let [ch (async/chan)
         c (Critter. (init-state name props env) ch)
-        body-ch (body c (:channel env))]
-    (go-loop []
-      (<! (async/timeout 100))
-      (>! body-ch [:move @(:state c)])
-      #_(recur))
+        world-ch (:channel env)
+        body-ch (body c world-ch)
+        exec-ch (executive ch c body-ch)]
     c))
 
 (defn make-list [cs env]
