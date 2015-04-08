@@ -36,9 +36,8 @@
   (let [min-distance 20]
     (some 
       (fn [[n x]]
-        (println n x) 
         (and (not= name n)  
-             (< (point/distance position @(:position x))
+             (< (point/distance position (:position @x))
                 min-distance))) 
       (:critters env))))
 
@@ -59,7 +58,6 @@
     env))
 
 (defn render [env]
-  (println "do render")
   (reagent/render-component [views/module-app-root env]
                             (. js/document (getElementById "app"))))
 
