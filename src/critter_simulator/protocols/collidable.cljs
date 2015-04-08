@@ -3,7 +3,6 @@
 
 (defprotocol Collidable
   "collision detection using bounding circles"
-  (eq? [a b])
   (position
     [collidable]
     "center point of collidable")

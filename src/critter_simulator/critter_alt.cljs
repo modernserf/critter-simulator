@@ -8,6 +8,7 @@
 ; [:name {params}]
 
 (defn next-pos [c {:keys [position velocity bearing]}]
+  
   (point/add
     position
     (point/polar->cartesian {:r velocity
@@ -20,28 +21,29 @@
         (case msg
           :move (>! ch-out [:critter-move
                             self
-                            {:position (next-pos self params)}]))
+                            (assoc params :position (next-pos self params))]))
         (recur (<! ch-in))))
     ch-in))
 
-(defn avoid-obstacle [self ch-out]
+(defn avoid-collision [self ch-out]
   (let [ch-in (async/chan)]
     (go-loop []
       (let [[msg params] (<! ch-in)]
         (case msg
-          :obstacle (>! ch-out [:move
-                                self
-                                {:bearing (+ Math/PI (:bearing params))}])
+          :collision (>! ch-out [:move (update-in params [:bearing] + 1.5)])
           :default)
         (recur)))
     ch-in))
 
-(defn executive [ch-in self ch-out]
-  (go-loop []
-    (<! (async/timeout 100))
-    (>! ch-out [:move @(:state self)])
-    (recur))
-  ch-in)
+(defn executive [ch-in self ch-world]
+  (let [ch-body  (body self ch-world)
+        ch-coll  (avoid-collision self ch-body)]
+    (go-loop [[msg state] (<! ch-in)]
+      (case msg
+        :collision (>! ch-coll [:collision state])
+        :ok (>! ch-body [:move state]))
+        (recur (<! ch-in)))
+    ch-in))
 
 (defn init-state [name props env]
   (atom (merge
@@ -61,8 +63,8 @@
   (let [ch (async/chan)
         c (Critter. (init-state name props env) ch)
         world-ch (:channel env)
-        body-ch (body c world-ch)
-        exec-ch (executive ch c body-ch)]
+        exec-ch (executive ch c world-ch)]
+    (go (>! exec-ch [:ok @(:state c)]))
     c))
 
 (defn make-list [cs env]

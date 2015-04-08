@@ -5,7 +5,8 @@
         [reagent.core                 :as reagent]
         [critter-simulator.critter-alt    :as critter]
         [critter-simulator.food       :as food]
-        [critter-simulator.views.core :as views]))
+        [critter-simulator.views.core :as views]
+         [critter-simulator.point :as point]))
 
 (enable-console-print!)
 
@@ -21,8 +22,8 @@
      ["Sarah Jane" {:color [:black :black :black]}]
      ["Gizmo"      {:color [:white :orange :orange]}]
      ["Twitch"     {:color [:black :black :black]}]
-     ["Onigiri"     {:color [:black :white :white]}]
-     ["Pui Pui"     {:color [:orange :white :white]}]
+     ["Onigiri"    {:color [:black :white :white]}]
+     ["Pui Pui"    {:color [:orange :white :white]}]
   ] base-env))
 
 (defn init-env []
@@ -31,12 +32,29 @@
 (defn in-bounds? [[x y] {:keys [width height]}]
   (and (< 0 x width) (< 0 y height)))
 
+(defn simple-collided? [{:keys [position name]} env]
+  (let [min-distance 20]
+    (some 
+      (fn [[n x]]
+        (println n x) 
+        (and (not= name n)  
+             (< (point/distance position @(:position x))
+                min-distance))) 
+      (:critters env))))
+
 (defn handle-critter! [c env next-state]
   (let [state  @(:state c)
         name   (:name state)
         state' (merge state next-state)]
     ; update critter in env
     (reset! (-> env deref :critters (get name)) state')
+    (go
+      (<! (async/timeout 100)) 
+      (>! (:channel c) 
+          (if (and (in-bounds? (:position state') @env)
+                   (not (simple-collided? state' @env)))
+            [:ok state']
+            [:collision state'])))
     ; (println env name next-state)
     env))
 
