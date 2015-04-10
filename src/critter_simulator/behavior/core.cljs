@@ -9,7 +9,7 @@
 ; TODO: increment based on time elapsed vs 1-per-round
 (defn inc-state [c k] (update-in c [:state k] #(+ % 0.1)))
 ; decrement until 0
-(defn dec-0 [x] (max 0 (- x 0.1)))
+(defn dec-0 [x] (max 0 (- x 1)))
 (defn dec-state [c k] (update-in c [:state k] dec-0))
 
 (defn behavior [k pred-recover? fn-threshold]

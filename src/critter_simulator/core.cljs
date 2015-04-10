@@ -11,15 +11,15 @@
 (enable-console-print!)
 
 (def base-critters
-  [["Slipper"     :hungry   {:color [:black :white :orange]}]
+  [["Claritin"    :hungry   {:color [:black :white :orange]}]
    ["Allegra"     :cowardly {:color [:black :orange :white]}]
    ["Totoro"      :friendly :hungry  {:color [:white :black :black]}]
    ["Squeaky"     :cowardly :orange]
    ["Sarah Jane"  :hungry   :cowardly :black]
    ["Gizmo"       :hungry   {:color [:white :orange :orange]}]
    ["Twitch"      :cowardly :black]
-   ["Professor Popcorn" :hungry {:color [:orange :white :white]}]
-   ["Jareth"      :hungry :cowardly :orange]
+   ; ["Professor Popcorn" :hungry {:color [:orange :white :white]}]
+   ; ["Jareth"      :hungry :cowardly :orange]
    ["Onigiri"     :cowardly {:color [:black :white :white]}]
    ["Pui Pui"     :hungry   {:color [:orange :white :white]}]
 ])

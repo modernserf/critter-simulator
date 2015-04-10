@@ -1,3 +1,6 @@
+since the dawn of civilization, humanity has yearned to simulate guinea pigs in a web browser.
+
+
 wheek wheek wheek
 
 critter agent
@@ -5,7 +8,7 @@ attractors (food, houses, each other) and repellers (the hand)
 boids
 emergent behavior
 
-Massively multi-critter online rodent petting game
+Massively multi-critter online rodeant petting game
 
 Simple AI
 - critters run from cursor
