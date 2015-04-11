@@ -1,12 +1,12 @@
 {
   "name": "critter-simulator",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "wheek wheek wheek",
   "main": "\"\"",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "deploy": "gh-pages-deploy",
-    "lein-build" : "rm -r resources/public/js/compiled/ && lein cljsbuild once min"
+    "lein-build": "rm -r resources/public/js/compiled/ && lein cljsbuild once min"
   },
   "repository": {
     "type": "git",
@@ -21,8 +21,10 @@
   "devDependencies": {
     "gh-pages-deploy": "^0.3.0"
   },
-  "gh-pages-deploy" : {
+  "gh-pages-deploy": {
     "staticpath": "resources/public",
-    "prep" : ["lein-build"]
+    "prep": [
+      "lein-build"
+    ]
   }
 }
