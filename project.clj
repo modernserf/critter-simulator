@@ -34,7 +34,7 @@
               :source-paths ["src"]
               :compiler {:output-to "resources/public/js/compiled/critter_simulator.js"
                          :main critter-simulator.core
-                         :optimizations :advanced
+                         :optimizations :whitespace
                          :pretty-print false}}]
     :test-commands {"unit-tests" ["slimerjs" :runner
                                   "target/cljs/testable.js"]}}
