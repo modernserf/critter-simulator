@@ -28,9 +28,15 @@
   (let [env   {:width 600
                :height 700
                :mouse nil
+               :poops []
                :behaviors critter-default-behaviors}]
     (atom (assoc env :critters (critter/make-list base-critters env)
                      :food     (food/make env)))))
+
+(swap! app-state assoc :do-poop 
+       (fn [c]
+         "receive poop"
+         (swap! app-state update-in [:poops] conj (:position c))))
 
 (defn trunc [[x y]] [(Math/round x) (Math/round y)])
 

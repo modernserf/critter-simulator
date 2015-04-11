@@ -77,6 +77,19 @@
      ]
     ))
 
+(defn module-poop [[x y]]
+  [:ellipse {:cx x 
+            :cy y 
+            :fill "#3D1F00" 
+            :rx 2
+            :ry 4}])
+
+(defn module-poop-layer [env]
+  (let [{:keys [width height poops]} @env]
+    [:svg.module-poop-layer {:width width
+                             :height height}
+        (wrap :g module-poop poops)]))
+
 (defn module-critter-pen [env]
   (let [{:keys [width height critters]} @env]
     [:svg.module-critter-pen {:width width
@@ -86,6 +99,7 @@
       [:rect {:width width
               :height height
               :style {:fill "gray"}}]
+      [module-poop-layer env]
       [module-food (:food @env)]
       [:g.critters (wrap :g module-critter critters env)]]))
 

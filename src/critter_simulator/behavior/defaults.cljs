@@ -7,6 +7,7 @@
   [
    behavior/lonely
    behavior/hungry
+   behavior/poopy
    behavior/bored
    behavior/afraid
    behavior/collision

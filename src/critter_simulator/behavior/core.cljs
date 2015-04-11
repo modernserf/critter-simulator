@@ -62,11 +62,14 @@
 (defn wander [c env]
   (critter/set-destination c 1 (point/random env)))
 
+(defn poop [c env]
+   ((:do-poop env) c)
+   (assoc-in c [:state :bowel] 0))
 
 (def lonely (behavior :lonely is-near-others?      go-to-neighbor))
 (def hungry (behavior :hungry is-eating?           go-to-food))
 (def afraid (behavior :afraid is-away-from-cursor? run-away))
-
+(def poopy  (behavior :bowel  (fn [_ _] false)     poop))
 (def bored  (behavior :bored  is-excited?          wander))
 
 (defn critter-collisions [c env]
