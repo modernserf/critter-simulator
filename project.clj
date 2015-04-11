@@ -30,11 +30,11 @@
                          :source-map true
                          :source-map-timestamp true
                          :cache-analysis true }}
-             {:id "min"`
+             {:id "min"
               :source-paths ["src"]
               :compiler {:output-to "resources/public/js/compiled/critter_simulator.js"
                          :main critter-simulator.core
-                         :optimizations :whitespace
+                         :optimizations :advanced
                          :pretty-print false}}]
     :test-commands {"unit-tests" ["slimerjs" :runner
                                   "target/cljs/testable.js"]}}
