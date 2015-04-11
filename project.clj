@@ -30,9 +30,16 @@
                          :source-map true
                          :source-map-timestamp true
                          :cache-analysis true }}
+             {:id "local"
+              :source-paths ["src"]
+              :compiler {:output-to "resources/public/js/compiled/critter_simulator.js"
+                         :main critter-simulator.core
+                         :optimizations :none
+                         :pretty-print false}}
              {:id "min"
               :source-paths ["src"]
               :compiler {:output-to "resources/public/js/compiled/critter_simulator.js"
+                         :static-fns true
                          :main critter-simulator.core
                          :optimizations :advanced
                          :pretty-print false}}]

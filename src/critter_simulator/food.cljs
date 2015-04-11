@@ -11,11 +11,8 @@
     (position [self] (:position self))
     (closest-perimeter-distance [_ _] radius))
 
-(defn make [env] (Food. [(/ (:width env) 2) (/ (:height env) 2)] radius))
-
-(defn tap [text expr]
-  (println text expr)
-  expr)
+(defn make [env] 
+  (Food. [(/ (:width env) 2) (/ (:height env) 2)] radius))
 
 (defn near? [f p]
    (> (+ 20 radius) (point/distance p (:position f))))

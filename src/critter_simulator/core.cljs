@@ -46,7 +46,6 @@
 (defn move-critters! [env]
   (let [next-critters (map #(critter/next-position (critter/do-behaviors % env))
                            (:critters env))]
-    ; (println (map critter-report next-critters))
     (swap! app-state assoc :critters next-critters)))
 
 (defn app-loop! []
