@@ -81,8 +81,8 @@
   [:ellipse {:cx x 
             :cy y 
             :fill "#3D1F00" 
-            :rx 2
-            :ry 4}])
+            :rx 1
+            :ry 2}])
 
 (defn module-poop-layer [env]
   (let [{:keys [width height poops]} @env]
