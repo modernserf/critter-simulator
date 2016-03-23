@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "deploy": "gh-pages-deploy",
-    "lein-build": "rm -rf target/ && rm -rf resources/public/js/compiled/ && lein cljsbuild once"
+    "lein-build": "rm -rf target/ && rm -rf resources/public/js/compiled/ && lein cljsbuild once min"
   },
   "repository": {
     "type": "git",

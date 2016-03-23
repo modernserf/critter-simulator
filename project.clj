@@ -1,4 +1,4 @@
-(defproject hello-world "0.1.0-SNAPSHOT"
+(defproject critter-simulator "0.1.0-SNAPSHOT"
     :description "guinea pig village simulation"
     :url "http://justinfalcone.com/critter-simulator"
     :license {:name "MIT"
@@ -24,9 +24,9 @@
                 :source-paths ["src"]
 
                 ;; If no code is to be run, set :figwheel true for continued automagical reloading
-                :figwheel {:on-jsload "hello-world.core/on-js-reload"}
+                :figwheel {:on-jsload "critter-simulator.core/on-js-reload"}
 
-                :compiler {:main hello-world.core
+                :compiler {:main critter-simulator.core
                            :asset-path "js/compiled/out"
                            :output-to "resources/public/js/compiled/critter_simulator.js"
                            :output-dir "resources/public/js/compiled/out"
@@ -37,7 +37,7 @@
                {:id "min"
                 :source-paths ["src"]
                 :compiler {:output-to "resources/public/js/compiled/critter_simulator.js"
-                           :main hello-world.core
+                           :main critter-simulator.core
                            :optimizations :advanced
                            :pretty-print false}}]}
 
