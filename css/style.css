@@ -1,0 +1,30 @@
+/* some style */
+* {
+    position: relative;
+    box-sizing: border-box;
+}
+
+html {
+    font-family: sans-serif;
+}
+
+h1, h2, h3 {
+    font-weight: bold;
+}
+
+h1 {
+    font-size: 36px;
+}
+
+h2 {
+    font-size: 24px;
+}
+
+h3 {
+    font-size: 18px;
+}
+
+.flex {
+    display: -webkit-flex;
+    display: flex;
+}
